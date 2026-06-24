@@ -29,4 +29,45 @@ jobs:
             phpunit.xml
 
       - name: Clear Live Laravel Cache
+        run: curl -s https://erp.atikautoricemills.com/auto-deploy-cache-clear/AtikAutoDeploy2026!name: Deploy ERP to cPanel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: Deploy to cPanel FTP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v3
+
+      - name: Sync Core Files to atik_erp_core
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: atik_erp_core/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            public/**
+            .env.example
+            README.md
+            phpunit.xml
+
+      - name: Sync Public Files to Domain Folder
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: public/
+          server-dir: erp.atikautoricemills.com/
+
+      - name: Clear Live Laravel Cache
         run: curl -s https://erp.atikautoricemills.com/auto-deploy-cache-clear/AtikAutoDeploy2026!
