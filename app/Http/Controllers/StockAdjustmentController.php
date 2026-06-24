@@ -31,7 +31,7 @@ class StockAdjustmentController extends Controller
             // Create a Journal/Adjustment Voucher
             $voucher = Voucher::create([
                 'voucher_type' => 'Journal', // Keeping it as Journal so it shows up cleanly in Daybook
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => 'ADJ',
                 'notes' => 'Stock Adjustment: ' . $request->notes
             ]);

@@ -61,7 +61,7 @@
 
                         <div>
                             <div class="flex justify-between font-bold text-slate-800 mb-1">
-                                <span>Purchase Accounts</span>
+                                <span>Direct Expenses (Purchases)</span>
                                 <span>{{ number_format($totalPurchases, 2) }}</span>
                             </div>
                             @foreach($purchases as $p)
@@ -93,7 +93,7 @@
                     <div class="p-4 sm:p-5 space-y-4 flex-1">
                         <div>
                             <div class="flex justify-between font-bold text-slate-800 mb-1">
-                                <span>Sales Accounts</span>
+                                <span>Direct Incomes (Sales)</span>
                                 <span>{{ number_format($totalSales, 2) }}</span>
                             </div>
                             @foreach($sales as $s)

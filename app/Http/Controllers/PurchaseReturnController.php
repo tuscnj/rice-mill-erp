@@ -29,7 +29,7 @@ class PurchaseReturnController extends Controller
 
             $voucher = Voucher::create([
                 'voucher_type' => 'Purchase Return',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->invoice_number,
                 'notes' => $narration,
             ]);

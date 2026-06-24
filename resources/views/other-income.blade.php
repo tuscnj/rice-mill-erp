@@ -12,6 +12,12 @@
 
             <form action="/run-other-income" method="POST" class="p-6 space-y-5">
                 @csrf
+                
+                <div class="mb-4">
+    <label class="block text-sm font-bold text-gray-700 mb-1">Transaction Date</label>
+    <input type="date" name="voucher_date" value="{{ date('Y-m-d') }}" 
+           class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500">
+</div>
 
                 <div class="grid md:grid-cols-2 gap-5">
                     <div>

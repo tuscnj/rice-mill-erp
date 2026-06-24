@@ -23,7 +23,7 @@ class BalanceTransferController extends Controller
 
             $voucher = Voucher::create([
                 'voucher_type' => 'Balance Transfer',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->reference_number,
                 'notes' => trim((string) $request->narration) ?: 'Balance transfer',
             ]);

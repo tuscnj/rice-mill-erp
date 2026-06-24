@@ -32,6 +32,12 @@
             </div>
         </div>
 
+        @if(session('error'))
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4 rounded-r-lg shadow-sm">
+                <p class="text-yellow-700 font-bold">{{ session('error') }}</p>
+            </div>
+        @endif
+
         <div class="bg-transparent md:bg-white rounded-none md:rounded-2xl shadow-none md:shadow-xl overflow-hidden border-none md:border border-gray-200">
             
             <table class="w-full text-left border-collapse hidden md:table">
@@ -69,12 +75,17 @@
                         <td class="p-4 text-gray-600 text-sm font-mono align-top">{{ $voucher->reference_number ?? 'N/A' }}</td>
                         <td class="p-4 text-gray-600 text-sm align-top max-w-xs truncate" title="{{ $voucher->notes }}">{{ $voucher->notes ?? '-' }}</td>
                         <td class="p-4 text-center align-top">
-                            <form action="/delete-transaction/{{ $voucher->id }}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to delete this? This will reverse all physical stock and financial balances attached to this entry.');">
-                                @csrf
-                                <button type="submit" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold py-1.5 px-3 border border-red-100 hover:border-red-600 rounded-lg text-xs transition whitespace-nowrap">
-                                    Reverse Entry
-                                </button>
-                            </form>
+                            <div class="flex justify-center gap-2">
+                                <a href="/edit-transaction/{{ $voucher->id }}" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-1.5 px-3 border border-blue-100 hover:border-blue-600 rounded-lg text-xs transition whitespace-nowrap">
+                                    Edit
+                                </a>
+                                <form action="/delete-transaction/{{ $voucher->id }}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to delete this? This will reverse all physical stock and financial balances attached to this entry.');">
+                                    @csrf
+                                    <button type="submit" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold py-1.5 px-3 border border-red-100 hover:border-red-600 rounded-lg text-xs transition whitespace-nowrap">
+                                        Reverse
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
 
@@ -241,12 +252,17 @@
                         </div>
                     @endif
 
-                    <form action="/delete-transaction/{{ $voucher->id }}" method="POST" onsubmit="return confirm('WARNING: Reverse all physical stock and financial balances attached to this entry?');" class="mt-4 pt-4 border-t border-gray-100">
-                        @csrf
-                        <button type="submit" class="w-full text-center text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition py-3 rounded-xl font-bold border border-red-100 text-sm">
-                            Reverse Entry
-                        </button>
-                    </form>
+                    <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                        <a href="/edit-transaction/{{ $voucher->id }}" class="w-1/2 text-center text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white transition py-3 rounded-xl font-bold border border-blue-100 text-sm">
+                            Edit
+                        </a>
+                        <form action="/delete-transaction/{{ $voucher->id }}" method="POST" onsubmit="return confirm('WARNING: Reverse all physical stock and financial balances attached to this entry?');" class="w-1/2">
+                            @csrf
+                            <button type="submit" class="w-full text-center text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition py-3 rounded-xl font-bold border border-red-100 text-sm">
+                                Reverse
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 @endforeach
             </div>

@@ -17,7 +17,7 @@ class PaymentController extends Controller
             // 1. Create the Payment Voucher Header
             $voucher = Voucher::create([
                 'voucher_type' => 'Payment',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->receipt_number,
                 'notes' => 'Payment made to party'
             ]);

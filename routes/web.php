@@ -40,6 +40,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/run-purchase', function () { return redirect('/purchase'); }); 
 
     // --- OPERATIONS: MILLING ---
+Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']);
+Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);
+Route::post('/update-mill/{id}', [App\Http\Controllers\MillController::class, 'update']); // <-- ADD THIS LINE
     Route::get('/mill', function () {
         $rawMaterials = App\Models\Item::where('category', 'Raw Material')->get();
         $finishedGoods = App\Models\Item::where('category', 'Finished Goods')->get();
@@ -176,6 +179,10 @@ Route::middleware('auth')->group(function () {
 
     // --- REPORTS & DAYBOOK ---
     Route::get('/report', [App\Http\Controllers\ReportController::class, 'profitAndLoss']);
+    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+    Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']); // THE NEW EDIT ROUTE
+    Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
+    Route::post('/delete-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'destroy']);
     
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
     Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
@@ -226,4 +233,19 @@ Route::middleware('auth')->group(function () {
         App\Models\Account::firstOrCreate(['name' => 'Mill Maintenance'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
         return "Expense accounts created!";
     });
+});
+
+Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);
+
+Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']);
+Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);
+Route::post('/update-mill/{id}', [App\Http\Controllers\MillController::class, 'update']);
+Route::post('/update-sales/{id}', [App\Http\Controllers\SalesController::class, 'update']); // <-- ADD THIS LINE
+
+Route::get('/clear-everything', function() {
+    \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+    return "All caches cleared successfully!";
 });

@@ -17,7 +17,7 @@ class ReceiptController extends Controller
             // 1. Create the Receipt Voucher Header
             $voucher = Voucher::create([
                 'voucher_type' => 'Receipt',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->receipt_number,
                 'notes' => 'Payment received from party'
             ]);

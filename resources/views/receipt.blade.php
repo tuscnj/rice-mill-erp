@@ -10,6 +10,12 @@
 
         <form action="/run-receipt" method="POST" class="p-6 sm:p-8 space-y-6">
             @csrf
+            
+        <div class="mb-4">
+    <label class="block text-sm font-bold text-gray-700 mb-1">Transaction Date</label>
+    <input type="date" name="voucher_date" value="{{ date('Y-m-d') }}" 
+           class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500">
+</div>
             <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Receive Into (Bank/Cash)</label>
                 <select name="cash_id" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">

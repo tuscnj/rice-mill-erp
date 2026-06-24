@@ -8,6 +8,7 @@ use App\Models\VoucherEntry;
 use App\Models\InventoryMovement;
 use App\Models\Item;
 use App\Models\Account;
+use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 
@@ -74,6 +75,65 @@ class TransactionController extends Controller
         return Response::stream($callback, 200, $headers);
     }
 
+// THE TRAFFIC COP: Routes to the correct edit screen based on transaction type
+    public function edit($id)
+    {
+        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
+
+        // ROUTE 1: PURCHASE
+        if ($voucher->voucher_type == 'Purchase') {
+            $suppliers = Account::where('group_type', 'Sundry Creditors')->get();
+            $units = Unit::all();
+            $items = Item::orderBy('category')->orderBy('name')->get();
+
+            $supplierEntry = $voucher->entries->where('entry_type', 'Credit')->first();
+            $partyId = $supplierEntry ? $supplierEntry->account_id : null;
+
+            return view('edit-purchase', compact('voucher', 'suppliers', 'units', 'items', 'partyId'));
+        }
+
+        // ROUTE 2: MILL PRODUCTION
+        elseif ($voucher->voucher_type == 'Production') {
+            // ... (keep your existing Production logic here) ...
+            $rawMaterials = Item::where('category', 'Raw Material')->get();
+            $finishedGoods = Item::where('category', 'Finished Goods')->get();
+            $byproducts = Item::where('category', 'Byproduct')->get();
+            $units = Unit::all();
+
+            foreach($rawMaterials as $item) $item->display_rate = $item->purchase_rate;
+            foreach($finishedGoods->merge($byproducts) as $item) {
+                $lastSaleRate = DB::table('inventory_movements')
+                    ->join('vouchers', 'inventory_movements.voucher_id', '=', 'vouchers.id')
+                    ->where('inventory_movements.item_id', $item->id)
+                    ->where('vouchers.voucher_type', 'Sales')
+                    ->orderBy('inventory_movements.id', 'desc')
+                    ->value('inventory_movements.rate');
+                $item->display_rate = $lastSaleRate ?: ($item->purchase_rate ?? 0);
+            }
+
+            $rawMovement = $voucher->inventoryMovements->where('movement_type', 'Out')->first();
+            $riceMovements = $voucher->inventoryMovements->filter(function($m) { return $m->movement_type == 'In' && $m->item && $m->item->category == 'Finished Goods'; });
+            $byproductMovements = $voucher->inventoryMovements->filter(function($m) { return $m->movement_type == 'In' && $m->item && $m->item->category == 'Byproduct'; });
+
+            return view('edit-mill', compact('voucher', 'rawMaterials', 'finishedGoods', 'byproducts', 'units', 'rawMovement', 'riceMovements', 'byproductMovements'));
+        }
+
+        // ROUTE 3: SALES
+        elseif ($voucher->voucher_type == 'Sales') {
+            $customers = Account::where('group_type', 'Sundry Debtors')->get();
+            $units = Unit::all();
+            $items = Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get();
+
+            // Find the customer ID (The account that was Debited)
+            $customerEntry = $voucher->entries->where('entry_type', 'Debit')->first();
+            $partyId = $customerEntry ? $customerEntry->account_id : null;
+
+            return view('edit-sales', compact('voucher', 'customers', 'units', 'items', 'partyId'));
+        }
+
+        return redirect('/transactions')->with('error', 'The full edit screen for ' . $voucher->voucher_type . ' is currently under construction!');
+    }
+    
     // Safely delete and reverse a transaction
     public function destroy($id)
     {

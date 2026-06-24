@@ -14,9 +14,9 @@ class ReportController extends Controller
 {
     public function profitAndLoss(Request $request)
     {
-        // 1. Handle Date Filtering
-        $startDate = $request->input('start_date', '2020-01-01'); // Default far past
-        $endDate = $request->input('end_date', date('Y-m-d')); // Default today
+        // 1. Handle Date Filtering (Default to exactly 1 year ago)
+        $startDate = $request->input('start_date', Carbon::now()->subYear()->format('Y-m-d'));
+        $endDate = $request->input('end_date', date('Y-m-d')); 
 
         // Find all voucher IDs that fall within the selected dates for Financial calculations
         $voucherIds = Voucher::whereDate('voucher_date', '>=', $startDate)
@@ -65,7 +65,6 @@ class ReportController extends Controller
             $historicalOpeningQty = $item->opening_stock + $inBefore - $outBefore;
             $totalOpeningStock += ($historicalOpeningQty * $item->purchase_rate);
 
-
             // B. Calculate Closing Stock (Inventory state UP TO end_date)
             $inUpTo = InventoryMovement::where('item_id', $item->id)
                 ->where('movement_type', 'In')
@@ -83,19 +82,13 @@ class ReportController extends Controller
             $totalClosingStock += ($historicalClosingQty * $item->purchase_rate);
         }
 
-        // Calculate Purchases within date range
-        $totalPurchases = VoucherEntry::whereIn('voucher_id', $voucherIds)
-                                      ->where('account_id', 1)
-                                      ->where('entry_type', 'Debit')
-                                      ->sum('amount');
-        $purchases = collect([(object)['name' => 'Purchase Account', 'total' => $totalPurchases]]);
+        // DYNAMIC FIX: Grab ALL Direct Expenses (Purchases) regardless of ID
+        $purchases = $getBalances('Direct Expenses', 'Debit');
+        $totalPurchases = $purchases->sum('total');
 
-        // Calculate Sales within date range
-        $totalSales = VoucherEntry::whereIn('voucher_id', $voucherIds)
-                                  ->where('account_id', 5)
-                                  ->where('entry_type', 'Credit')
-                                  ->sum('amount');
-        $sales = collect([(object)['name' => 'Sales Account', 'total' => $totalSales]]);
+        // DYNAMIC FIX: Grab ALL Direct Incomes (Sales) regardless of ID
+        $sales = $getBalances('Direct Incomes', 'Credit');
+        $totalSales = $sales->sum('total');
 
         // Trading Account Balancing Math
         $leftTrading = $totalOpeningStock + $totalPurchases;

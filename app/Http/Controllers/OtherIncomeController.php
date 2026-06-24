@@ -17,7 +17,7 @@ class OtherIncomeController extends Controller
             // 1. Create the Other Income Voucher
             $voucher = Voucher::create([
                 'voucher_type' => 'Other Income',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->reference_number,
                 'notes' => $request->notes ?? 'Other income received'
             ]);

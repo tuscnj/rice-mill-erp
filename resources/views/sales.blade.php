@@ -11,6 +11,12 @@
 
         <form action="/run-sales" method="POST" class="p-6 sm:p-8 space-y-8">
             @csrf
+            
+<div class="mb-4">
+    <label class="block text-sm font-bold text-gray-700 mb-1">Transaction Date</label>
+    <input type="date" name="voucher_date" value="{{ date('Y-m-d') }}" 
+           class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500">
+</div>
 
             <!-- Party Selection -->
             <div>

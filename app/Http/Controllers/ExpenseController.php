@@ -17,7 +17,7 @@ class ExpenseController extends Controller
             // 1. Create the Expense Voucher
             $voucher = Voucher::create([
                 'voucher_type' => 'Expense',
-                'voucher_date' => now(),
+                'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->reference,
                 'notes' => $request->notes ?? 'Daily operating expense'
             ]);
