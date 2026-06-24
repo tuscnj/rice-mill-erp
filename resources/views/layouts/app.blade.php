@@ -6,11 +6,18 @@
     <title>Rice Mill Control Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 font-sans flex h-screen overflow-hidden">
+<body class="bg-slate-100 font-sans flex h-screen overflow-hidden relative">
 
-    <aside class="w-64 bg-slate-900 text-gray-300 flex flex-col h-full shadow-2xl">
-        <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center gap-3">
-            🌾 <span class="tracking-wide">Atik Auto Rice</span>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity md:hidden" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-gray-300 flex flex-col h-full shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0">
+        <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                🌾 <span class="tracking-wide">Atik Auto Rice</span>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
         
         <nav class="flex-1 overflow-y-auto py-4 space-y-1">
@@ -35,12 +42,12 @@
 
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Directories</div>
             <a href="/accounts" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📒 Accounts & Ledgers</a>
-            <a href="/items" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">🌾 Item Variants</a>
             <a href="/units" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚖️ Unit Settings</a>
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
             <a href="/transactions" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-red-400">📖 Daybook (Edits)</a>
-        <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Account</div>
+            
+            <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Account</div>
             <form action="/logout" method="POST" class="px-6 py-2.5">
                 @csrf
                 <button type="submit" class="w-full text-left text-gray-400 hover:text-white transition font-bold">
@@ -50,16 +57,34 @@
         </nav>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header class="bg-white shadow-sm border-b border-gray-200 p-4 px-8 flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-gray-800">@yield('title', 'Control Center')</h2>
-            <div class="text-gray-500 text-sm font-semibold">Tusar Ahmmed (Admin)</div>
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto w-full bg-slate-50">
+        <header class="bg-white shadow-sm border-b border-gray-200 p-4 sm:px-8 flex justify-between items-center sticky top-0 z-30">
+            <div class="flex items-center gap-3 sm:gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden p-1 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 truncate">@yield('title', 'Control Center')</h2>
+            </div>
+            <div class="text-gray-500 text-xs sm:text-sm font-semibold hidden sm:block">Tusar Ahmmed (Admin)</div>
+            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm sm:hidden">TA</div>
         </header>
 
-        <div class="p-8">
+        <div class="p-4 md:p-8 flex-1">
             @yield('content')
         </div>
     </main>
 
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            // Toggle sidebar visibility
+            sidebar.classList.toggle('-translate-x-full');
+            
+            // Toggle overlay visibility
+            overlay.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>

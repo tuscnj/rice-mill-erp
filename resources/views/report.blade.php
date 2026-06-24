@@ -3,48 +3,55 @@
 @section('title', 'Financial Reports')
 
 @section('content')
-    <div class="max-w-6xl mx-auto pb-12">
+    <div class="max-w-6xl mx-auto pb-12 mt-4 sm:mt-6">
         
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-6">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Profit & Loss A/c</h1>
-                <p class="text-gray-500">Standard T-Format Statement</p>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Profit & Loss A/c</h1>
+                <p class="text-gray-500 text-sm sm:text-base mt-1">Standard T-Format Statement</p>
             </div>
             
-            <form method="GET" action="/report" class="flex gap-3 items-end bg-white p-3 rounded-lg shadow-sm border border-gray-200 print:hidden">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">From Date</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" class="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">To Date</label>
-                    <input type="date" name="end_date" value="{{ $endDate }}" class="p-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm">
-                </div>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 transition">Filter</button>
-                <a href="/report" class="text-gray-400 hover:text-gray-700 underline text-sm ml-1 mb-2">Reset</a>
-            </form>
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+                <form method="GET" action="/report" class="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-white p-4 rounded-xl shadow-sm border border-gray-100 print:hidden w-full sm:w-auto">
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">From Date</label>
+                        <input type="date" name="start_date" value="{{ $startDate }}" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition outline-none text-sm font-medium text-gray-700">
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">To Date</label>
+                        <input type="date" name="end_date" value="{{ $endDate }}" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition outline-none text-sm font-medium text-gray-700">
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <button type="submit" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition active:scale-95">Filter</button>
+                        <a href="/report" class="flex justify-center items-center px-4 py-2 text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-bold transition">Reset</a>
+                    </div>
+                </form>
 
-            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center gap-2 print:hidden">
-                🖨️ Print
-            </button>
+                <button onclick="window.print()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 print:hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print
+                </button>
+            </div>
         </div>
 
-        <div class="bg-white shadow-2xl overflow-hidden border-2 border-slate-800 print:shadow-none print:border-none">
+        <div class="bg-white shadow-xl sm:rounded-xl overflow-hidden border border-slate-300 print:shadow-none print:border-none print:rounded-none">
             
-            <div class="text-center py-4 border-b-2 border-slate-800 bg-slate-50">
-                <p class="text-lg font-bold text-slate-800 uppercase tracking-wider">Profit & Loss Account</p>
-                <p class="text-xs text-slate-500 mt-1">For the period: <span class="font-bold text-slate-700">{{ $displayStartDate }} to {{ $displayEndDate }}</span></p>
+            <div class="text-center py-6 border-b-2 border-slate-800 bg-slate-50/50">
+                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800 uppercase tracking-widest">Profit & Loss Account</h2>
+                <p class="text-sm text-slate-500 mt-1">For the period: <span class="font-bold text-slate-700">{{ $displayStartDate }} to {{ $displayEndDate }}</span></p>
             </div>
 
-            <div class="grid grid-cols-2 text-sm border-b-2 border-slate-800 bg-slate-100 font-bold text-slate-800">
-                <div class="p-3 border-r-2 border-slate-800">Particulars</div>
-                <div class="p-3">Particulars</div>
+            <div class="hidden md:grid grid-cols-2 text-sm border-b-2 border-slate-800 bg-slate-100 font-bold text-slate-800 uppercase tracking-wider">
+                <div class="p-3 border-r-2 border-slate-800 text-center">Dr. (Particulars)</div>
+                <div class="p-3 text-center">Cr. (Particulars)</div>
             </div>
 
-            <div class="grid grid-cols-2 text-sm border-b-4 border-double border-slate-800 min-h-[150px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 text-sm sm:text-base border-b-4 border-double border-slate-800 min-h-[150px]">
                 
-                <div class="flex flex-col border-r-2 border-slate-800 bg-white">
-                    <div class="p-4 space-y-4 flex-1">
+                <div class="flex flex-col border-b-2 md:border-b-0 md:border-r-2 border-slate-800 bg-white">
+                    <div class="md:hidden p-2 bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-xs uppercase tracking-wider text-center">Dr. (Trading)</div>
+                    
+                    <div class="p-4 sm:p-5 space-y-4 flex-1">
                         <div>
                             <div class="flex justify-between font-bold text-slate-800 mb-1">
                                 <span>Opening Stock</span>
@@ -59,7 +66,7 @@
                             </div>
                             @foreach($purchases as $p)
                                 @if($p->total > 0)
-                                <div class="flex justify-between text-slate-600 pl-4 text-xs">
+                                <div class="flex justify-between text-slate-600 pl-4 text-xs sm:text-sm mt-1">
                                     <span>{{ $p->name }}</span>
                                     <span>{{ number_format($p->total, 2) }}</span>
                                 </div>
@@ -68,20 +75,22 @@
                         </div>
 
                         @if($grossProfit > 0)
-                        <div class="flex justify-between font-bold text-blue-700 pt-4">
+                        <div class="flex justify-between font-extrabold text-blue-700 pt-4 mt-2 border-t border-dashed border-gray-200">
                             <span>Gross Profit c/o</span>
                             <span>{{ number_format($grossProfit, 2) }}</span>
                         </div>
                         @endif
                     </div>
-                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-50 p-3 border-t-2 border-slate-800">
+                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-50 p-4 border-t-2 border-slate-800 text-base sm:text-lg">
                         <span>Total</span>
                         <span>{{ number_format($tradingTotal, 2) }}</span>
                     </div>
                 </div>
 
                 <div class="flex flex-col bg-white">
-                    <div class="p-4 space-y-4 flex-1">
+                    <div class="md:hidden p-2 bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-xs uppercase tracking-wider text-center">Cr. (Trading)</div>
+                    
+                    <div class="p-4 sm:p-5 space-y-4 flex-1">
                         <div>
                             <div class="flex justify-between font-bold text-slate-800 mb-1">
                                 <span>Sales Accounts</span>
@@ -89,7 +98,7 @@
                             </div>
                             @foreach($sales as $s)
                                 @if($s->total > 0)
-                                <div class="flex justify-between text-slate-600 pl-4 text-xs">
+                                <div class="flex justify-between text-slate-600 pl-4 text-xs sm:text-sm mt-1">
                                     <span>{{ $s->name }}</span>
                                     <span>{{ number_format($s->total, 2) }}</span>
                                 </div>
@@ -98,32 +107,34 @@
                         </div>
 
                         <div>
-                            <div class="flex justify-between font-bold text-slate-800 mb-1 mt-2">
+                            <div class="flex justify-between font-bold text-slate-800 mb-1 mt-4">
                                 <span>Closing Stock</span>
                                 <span>{{ number_format($totalClosingStock, 2) }}</span>
                             </div>
                         </div>
 
                         @if($grossLoss > 0)
-                        <div class="flex justify-between font-bold text-red-600 pt-4">
+                        <div class="flex justify-between font-extrabold text-red-600 pt-4 mt-2 border-t border-dashed border-gray-200">
                             <span>Gross Loss c/o</span>
                             <span>{{ number_format($grossLoss, 2) }}</span>
                         </div>
                         @endif
                     </div>
-                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-50 p-3 border-t-2 border-slate-800">
+                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-50 p-4 border-t-2 border-slate-800 text-base sm:text-lg">
                         <span>Total</span>
                         <span>{{ number_format($tradingTotal, 2) }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 text-sm min-h-[300px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 text-sm sm:text-base min-h-[300px]">
                 
-                <div class="flex flex-col border-r-2 border-slate-800 bg-white">
-                    <div class="p-4 space-y-4 flex-1">
+                <div class="flex flex-col border-b-2 md:border-b-0 md:border-r-2 border-slate-800 bg-white">
+                    <div class="md:hidden p-2 bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-xs uppercase tracking-wider text-center">Dr. (P&L)</div>
+                    
+                    <div class="p-4 sm:p-5 space-y-4 flex-1">
                         @if($grossLoss > 0)
-                        <div class="flex justify-between font-bold text-red-600 pb-2 border-b border-gray-100">
+                        <div class="flex justify-between font-extrabold text-red-600 pb-3 border-b border-gray-200 mb-3">
                             <span>Gross Loss b/f</span>
                             <span>{{ number_format($grossLoss, 2) }}</span>
                         </div>
@@ -135,7 +146,7 @@
                                 <span>{{ number_format($totalIndirectExpenses, 2) }}</span>
                             </div>
                             @foreach($indirectExpenses as $expense)
-                                <div class="flex justify-between text-slate-600 pl-4 text-xs mb-1">
+                                <div class="flex justify-between text-slate-600 pl-4 text-xs sm:text-sm mt-1">
                                     <span>{{ $expense->name }}</span>
                                     <span>{{ number_format($expense->total, 2) }}</span>
                                 </div>
@@ -143,22 +154,24 @@
                         </div>
 
                         @if($netProfit > 0)
-                        <div class="flex justify-between font-extrabold text-green-700 pt-8 text-base">
+                        <div class="flex justify-between font-black text-emerald-600 pt-6 mt-4 border-t border-dashed border-gray-200 text-lg sm:text-xl">
                             <span>Nett Profit</span>
                             <span>{{ number_format($netProfit, 2) }}</span>
                         </div>
                         @endif
                     </div>
-                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-100 p-3 border-t-4 border-slate-800">
+                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-100 p-4 border-t-4 border-slate-800 text-base sm:text-lg">
                         <span>Total</span>
                         <span>{{ number_format($plTotal, 2) }}</span>
                     </div>
                 </div>
 
                 <div class="flex flex-col bg-white">
-                    <div class="p-4 space-y-4 flex-1">
+                    <div class="md:hidden p-2 bg-slate-100 border-b border-slate-200 font-bold text-slate-700 text-xs uppercase tracking-wider text-center">Cr. (P&L)</div>
+                    
+                    <div class="p-4 sm:p-5 space-y-4 flex-1">
                         @if($grossProfit > 0)
-                        <div class="flex justify-between font-bold text-blue-700 pb-2 border-b border-gray-100">
+                        <div class="flex justify-between font-extrabold text-blue-700 pb-3 border-b border-gray-200 mb-3">
                             <span>Gross Profit b/f</span>
                             <span>{{ number_format($grossProfit, 2) }}</span>
                         </div>
@@ -171,7 +184,7 @@
                                 <span>{{ number_format($totalIndirectIncomes, 2) }}</span>
                             </div>
                             @foreach($indirectIncomes as $income)
-                                <div class="flex justify-between text-slate-600 pl-4 text-xs mb-1">
+                                <div class="flex justify-between text-slate-600 pl-4 text-xs sm:text-sm mt-1">
                                     <span>{{ $income->name }}</span>
                                     <span>{{ number_format($income->total, 2) }}</span>
                                 </div>
@@ -180,13 +193,13 @@
                         @endif
 
                         @if($netLoss > 0)
-                        <div class="flex justify-between font-extrabold text-red-700 pt-8 text-base">
+                        <div class="flex justify-between font-black text-red-600 pt-6 mt-4 border-t border-dashed border-gray-200 text-lg sm:text-xl">
                             <span>Nett Loss</span>
                             <span>{{ number_format($netLoss, 2) }}</span>
                         </div>
                         @endif
                     </div>
-                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-100 p-3 border-t-4 border-slate-800">
+                    <div class="flex justify-between font-extrabold text-slate-900 bg-slate-100 p-4 border-t-4 border-slate-800 text-base sm:text-lg">
                         <span>Total</span>
                         <span>{{ number_format($plTotal, 2) }}</span>
                     </div>

@@ -33,6 +33,14 @@ class AccountController extends Controller
 
     public function update(Request $request, $id)
     {
+        // 🚨 ADDED VALIDATION: Prevents renaming an account to a name that already exists (ignores its own ID)
+        $request->validate([
+            'name' => 'required|string|max:255|unique:accounts,name,' . $id,
+            'group_type' => 'required|string'
+        ], [
+            'name.unique' => 'An account with this exact name already exists!'
+        ]);
+
         DB::transaction(function () use ($request, $id) {
             $account = Account::findOrFail($id);
             $account->update([
@@ -101,6 +109,14 @@ class AccountController extends Controller
 
     public function store(Request $request)
     {
+        // 🚨 ADDED VALIDATION: Prevents creating a new account if the name already exists
+        $request->validate([
+            'name' => 'required|string|max:255|unique:accounts,name',
+            'group_type' => 'required|string'
+        ], [
+            'name.unique' => 'An account with this exact name already exists!'
+        ]);
+
         DB::transaction(function () use ($request) {
             $openingBalance = (float) ($request->opening_balance ?? 0);
 

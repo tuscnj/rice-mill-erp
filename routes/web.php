@@ -21,7 +21,7 @@ Route::middleware('auth')->group(function () {
     // --- DASHBOARDS ---
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
     
-    Route::get('/stock', [App\Http\Controllers\ItemController::class, 'index']);
+    Route::get('/stock', [App\Http\Controllers\ItemController::class, 'stock']);
 
     // --- OPERATIONS: PURCHASE ---
     Route::get('/purchase', function () {
@@ -118,6 +118,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/run-purchase-return', [App\Http\Controllers\PurchaseReturnController::class, 'store']);
     Route::get('/run-purchase-return', function () { return redirect('/purchase-return'); }); 
 
+    // --- OPERATIONS: STOCK ADJUSTMENT ---
+    Route::get('/stock-adjustment', [App\Http\Controllers\StockAdjustmentController::class, 'index']);
+    Route::post('/run-stock-adjustment', [App\Http\Controllers\StockAdjustmentController::class, 'store']);
+
     // --- FINANCIALS: JOURNAL / BALANCE TRANSFER ---
     Route::get('/balance-transfer', function () {
         $accounts = App\Models\Account::orderBy('name')->get();
@@ -133,18 +137,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/item-ledger/{id}/export', [App\Http\Controllers\ItemLedgerController::class, 'export']);
     
     Route::get('/payment', function () {
-        App\Models\Account::firstOrCreate(['id' => 4], ['name' => 'Cash in Hand', 'group_type' => 'Cash', 'balance' => 500000]);
+        App\Models\Account::firstOrCreate(
+            ['name' => 'Cash in Hand'], 
+            ['group_type' => 'Cash', 'balance' => 500000]
+        );
         $banks = App\Models\Account::where('group_type', 'Cash')->get();
-        $suppliers = App\Models\Account::where('group_type', 'Sundry Creditors')->get();
-        return view('payment', ['banks' => $banks, 'suppliers' => $suppliers]);
+        // Load BOTH Suppliers and Customers
+        $parties = App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->orderBy('name')->get();
+        return view('payment', ['banks' => $banks, 'parties' => $parties]);
     });
     Route::post('/run-payment', [App\Http\Controllers\PaymentController::class, 'store']);
     Route::get('/run-payment', function () { return redirect('/payment'); }); 
 
     Route::get('/receipt', function () {
         $banks = App\Models\Account::where('group_type', 'Cash')->get();
-        $customers = App\Models\Account::where('group_type', 'Sundry Debtors')->get();
-        return view('receipt', ['banks' => $banks, 'customers' => $customers]);
+        // Load BOTH Suppliers and Customers
+        $parties = App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->orderBy('name')->get();
+        return view('receipt', ['banks' => $banks, 'parties' => $parties]);
     });
     Route::post('/run-receipt', [App\Http\Controllers\ReceiptController::class, 'store']);
     Route::get('/run-receipt', function () { return redirect('/receipt'); }); 
@@ -180,11 +189,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/update-account/{id}', [App\Http\Controllers\AccountController::class, 'update']);
     Route::get('/delete-account/{id}', [App\Http\Controllers\AccountController::class, 'destroy']);
 
-    // --- DIRECTORIES: ITEMS ---
-    Route::get('/items', [App\Http\Controllers\ItemController::class, 'index']);
+// --- DIRECTORIES: ITEMS ---
     Route::post('/items', [App\Http\Controllers\ItemController::class, 'store']); 
     Route::post('/run-item', [App\Http\Controllers\ItemController::class, 'store']); 
-    Route::get('/run-item', function () { return redirect('/items'); }); 
+    Route::get('/run-item', function () { return redirect('/stock'); }); // Redirect to stock
     Route::get('/edit-item/{id}', [App\Http\Controllers\ItemController::class, 'edit']);
     Route::post('/update-item/{id}', [App\Http\Controllers\ItemController::class, 'update']);
     Route::get('/delete-item/{id}', [App\Http\Controllers\ItemController::class, 'destroy']);
@@ -199,22 +207,23 @@ Route::middleware('auth')->group(function () {
 
     // --- INITIAL SETUP MACROS ---
     Route::get('/setup-accounts', function () {
-        App\Models\Account::firstOrCreate(['id' => 1], ['name' => 'Purchase Account', 'group_type' => 'Direct Expenses', 'balance' => 0]);
-        App\Models\Account::firstOrCreate(['id' => 2], ['name' => 'Rahman Traders (Supplier)', 'group_type' => 'Sundry Creditors', 'balance' => 0]);
-        App\Models\Account::firstOrCreate(['id' => 3], ['name' => 'Karim Farmers (Supplier)', 'group_type' => 'Sundry Creditors', 'balance' => 0]);
+        // 🚨 FIX: Updated all of these to check by Name so it doesn't duplicate if ID is taken
+        App\Models\Account::firstOrCreate(['name' => 'Purchase Account'], ['group_type' => 'Direct Expenses', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Rahman Traders (Supplier)'], ['group_type' => 'Sundry Creditors', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Karim Farmers (Supplier)'], ['group_type' => 'Sundry Creditors', 'balance' => 0]);
         return "Accounts setup complete!";
     });
 
     Route::get('/setup-customers', function () {
-        App\Models\Account::firstOrCreate(['id' => 5], ['name' => 'Sales Account', 'group_type' => 'Direct Incomes', 'balance' => 0]);
-        App\Models\Account::firstOrCreate(['id' => 6], ['name' => 'Mahi Groceries (Customer)', 'group_type' => 'Sundry Debtors', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Sales Account'], ['group_type' => 'Direct Incomes', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Mahi Groceries (Customer)'], ['group_type' => 'Sundry Debtors', 'balance' => 0]);
         return "Customers setup complete!";
     });
 
     Route::get('/setup-expenses', function () {
-        App\Models\Account::firstOrCreate(['id' => 7], ['name' => 'Worker Wages', 'group_type' => 'Indirect Expenses', 'balance' => 0]);
-        App\Models\Account::firstOrCreate(['id' => 8], ['name' => 'Electricity Bill', 'group_type' => 'Indirect Expenses', 'balance' => 0]);
-        App\Models\Account::firstOrCreate(['id' => 9], ['name' => 'Mill Maintenance', 'group_type' => 'Indirect Expenses', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Worker Wages'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Electricity Bill'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
+        App\Models\Account::firstOrCreate(['name' => 'Mill Maintenance'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
         return "Expense accounts created!";
     });
 });

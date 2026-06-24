@@ -19,30 +19,43 @@ class ReceiptController extends Controller
                 'voucher_type' => 'Receipt',
                 'voucher_date' => now(),
                 'reference_number' => $request->receipt_number,
-                'notes' => 'Payment received from customer'
+                'notes' => 'Payment received from party'
             ]);
 
-            // 2. Debit your Bank/Cash (This INCREASES your cash balance)
+            // 2. Debit your Bank/Cash (Money coming IN to your account)
             VoucherEntry::create([
                 'voucher_id' => $voucher->id,
                 'account_id' => $request->cash_id,
                 'amount' => $request->amount,
                 'entry_type' => 'Debit'
             ]);
-            Account::where('id', $request->cash_id)->increment('balance', $request->amount);
 
-            // 3. Credit the Customer (This DECREASES the amount they owe you)
+            // 3. Credit the Party (Money given BY them)
             VoucherEntry::create([
                 'voucher_id' => $voucher->id,
-                'account_id' => $request->customer_id, 
+                'account_id' => $request->party_id, 
                 'amount' => $request->amount,
                 'entry_type' => 'Credit'
             ]);
-            Account::where('id', $request->customer_id)->decrement('balance', $request->amount);
+
+            // 4. SMART BALANCE RECALCULATION
+            $this->updateAccountBalance($request->party_id);
+            $this->updateAccountBalance($request->cash_id);
 
         });
 
-        // Redirect back to the dashboard so we can see our cash go up!
-        return redirect('/');
+        return redirect('/ledger/' . $request->party_id);
+    }
+
+    // Helper function to safely calculate balances based on Account Type
+    private function updateAccountBalance($accountId) {
+        $account = Account::findOrFail($accountId);
+        $isDebit = in_array($account->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
+        
+        $totalDebit = VoucherEntry::where('account_id', $accountId)->where('entry_type', 'Debit')->sum('amount');
+        $totalCredit = VoucherEntry::where('account_id', $accountId)->where('entry_type', 'Credit')->sum('amount');
+        
+        $account->balance = $isDebit ? ($totalDebit - $totalCredit) : ($totalCredit - $totalDebit);
+        $account->save();
     }
 }

@@ -8,83 +8,56 @@ use App\Models\Unit;
 
 class ItemController extends Controller
 {
-    public function index()
+    // 1. LOADS "INVENTORY" (The Live Stock Dashboard)
+    public function stock()
     {
         $items = Item::orderBy('category')->orderBy('name')->get();
-        $units = Unit::all(); 
+        $units = Unit::all();
         return view('stock', ['items' => $items, 'units' => $units]);
     }
 
+    // 2. Save a new item (Used by the form on the Inventory page)
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string',
-            'unit' => 'required|string',
-            'opening_stock' => 'nullable|numeric|min:0',
-            'purchase_rate' => 'nullable|numeric|min:0', 
         ]);
-
-        // Find the unit conversion rate so we always save pure Base KG to the DB
-        $unitStr = $request->unit;
-        $unitObj = Unit::where('short_name', $unitStr)->orWhere('name', $unitStr)->first();
-        $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
 
         Item::create([
             'name' => $request->name,
             'category' => $request->category,
-            'unit' => $unitStr,
-            'opening_stock' => ((float) ($request->opening_stock ?? 0)) * $conversionRate, 
-            'current_stock' => ((float) ($request->opening_stock ?? 0)) * $conversionRate, 
-            'purchase_rate' => ((float) ($request->purchase_rate ?? 0)) / $conversionRate 
+            'opening_stock' => $request->opening_stock ?? 0,
+            'current_stock' => $request->opening_stock ?? 0,
+            'purchase_rate' => $request->opening_rate ?? $request->purchase_rate ?? 0,
+            'unit' => $request->unit ?? 'KG'
         ]);
 
-        return redirect('/items')->with('success', 'Item created successfully.');
+        return back(); 
     }
 
+    // 3. Edit Item View
     public function edit($id)
     {
         $item = Item::findOrFail($id);
         $units = Unit::all();
-        return view('edit-item', ['item' => $item, 'units' => $units]);
+        return view('edit-item', compact('item', 'units'));
     }
 
+    // 4. Update Item
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string',
-            'unit' => 'required|string',
-            'opening_stock' => 'required|numeric|min:0',
-            'current_stock' => 'required|numeric|min:0',
-            'purchase_rate' => 'required|numeric|min:0',
-        ]);
-
-        // Find the unit conversion rate so we always save pure Base KG to the DB
-        $unitStr = $request->unit;
-        $unitObj = Unit::where('short_name', $unitStr)->orWhere('name', $unitStr)->first();
-        $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
-
-        Item::where('id', $id)->update([
-            'name' => $request->name,
-            'category' => $request->category,
-            'unit' => $unitStr,
-            'opening_stock' => ((float) $request->opening_stock) * $conversionRate, 
-            'current_stock' => ((float) $request->current_stock) * $conversionRate,
-            'purchase_rate' => ((float) $request->purchase_rate) / $conversionRate
-        ]);
+        $item = Item::findOrFail($id);
+        $item->update($request->all());
         
-        return redirect('/items');
+        // 🚨 CHANGED: Redirects to stock instead of items
+        return redirect('/stock');
     }
 
+    // 5. Delete Item
     public function destroy($id)
     {
-        $hasStockHistory = \App\Models\InventoryMovement::where('item_id', $id)->exists();
-        if ($hasStockHistory) {
-            return "<script>alert('🛑 CANNOT DELETE: This item has inventory history. You may only edit its name.'); window.location.href='/items';</script>";
-        }
-
         Item::findOrFail($id)->delete();
-        return redirect('/items');
+        return back();
     }
 }
