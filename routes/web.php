@@ -242,10 +242,13 @@ Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::c
 Route::post('/update-mill/{id}', [App\Http\Controllers\MillController::class, 'update']);
 Route::post('/update-sales/{id}', [App\Http\Controllers\SalesController::class, 'update']); // <-- ADD THIS LINE
 
-Route::get('/clear-everything', function() {
+// --- AUTOMATED DEPLOYMENT WEBHOOK ---
+Route::get('/auto-deploy-cache-clear/{secret}', function($secret) {
+    // Only allow the GitHub robot with this exact password to trigger this
+    if ($secret !== 'AtikAutoDeploy2026!') {
+        return 'Unauthorized';
+    }
+    
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
-    \Illuminate\Support\Facades\Artisan::call('config:clear');
-    \Illuminate\Support\Facades\Artisan::call('cache:clear');
-    \Illuminate\Support\Facades\Artisan::call('view:clear');
-    return "All caches cleared successfully!";
+    return 'Deployment Complete: All caches cleared successfully!';
 });
