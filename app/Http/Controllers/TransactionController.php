@@ -157,10 +157,16 @@ class TransactionController extends Controller
             return view('edit-sales-return', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
 
-        // ROUTE 8: BALANCE TRANSFER / JOURNAL
-        elseif (in_array($voucher->voucher_type, ['Balance Transfer', 'Journal'])) {
+// ROUTE 8: BALANCE TRANSFER
+        elseif ($voucher->voucher_type == 'Balance Transfer') {
             $accounts = Account::orderBy('name')->get();
             return view('edit-balance-transfer', compact('voucher', 'accounts'));
+        }
+
+        // ROUTE 9: STOCK ADJUSTMENT (Journal)
+        elseif ($voucher->voucher_type == 'Journal' || $voucher->voucher_type == 'Stock Adjustment') {
+            $items = Item::orderBy('name')->get();
+            return view('edit-stock-adjustment', compact('voucher', 'items'));
         }
 
         // FALLBACK: If it's a type we haven't built an edit screen for yet
