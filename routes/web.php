@@ -252,3 +252,10 @@ Route::get('/auto-deploy-cache-clear/{secret}', function($secret) {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     return 'Deployment Complete: All caches cleared successfully!';
 });
+
+Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']);
+Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);
+Route::post('/update-mill/{id}', [App\Http\Controllers\MillController::class, 'update']);
+Route::post('/update-sales/{id}', [App\Http\Controllers\SalesController::class, 'update']); 
+Route::post('/update-expense/{id}', [App\Http\Controllers\ExpenseController::class, 'update']); // <-- ADD THIS LINE
+
