@@ -12,123 +12,113 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    public function profitAndLoss(Request $request)
+    public function index(Request $request)
     {
-        // 1. Handle Date Filtering (Default to exactly 1 year ago)
-        $startDate = $request->input('start_date', Carbon::now()->subYear()->format('Y-m-d'));
+        // 1. Handle Global Filters
+        $reportType = $request->input('report_type', 'Profit_Loss');
+        
+        // Default P&L to 1 year, but transaction reports to 1 month for better performance
+        $defaultStart = $reportType === 'Profit_Loss' ? Carbon::now()->subYear()->format('Y-m-d') : Carbon::now()->startOfMonth()->format('Y-m-d');
+        
+        $startDate = $request->input('start_date', $defaultStart);
         $endDate = $request->input('end_date', date('Y-m-d')); 
-
-        // Find all voucher IDs that fall within the selected dates for Financial calculations
-        $voucherIds = Voucher::whereDate('voucher_date', '>=', $startDate)
-                             ->whereDate('voucher_date', '<=', $endDate)
-                             ->pluck('id');
-
-        // 2. Helper function to get exact balances FOR SELECTED DATES (Financials)
-        $getBalances = function($groupType, $normalBalance) use ($voucherIds) {
-            $accounts = Account::where('group_type', $groupType)->get();
-            foreach($accounts as $acc) {
-                $debit = VoucherEntry::whereIn('voucher_id', $voucherIds)
-                                     ->where('account_id', $acc->id)
-                                     ->where('entry_type', 'Debit')
-                                     ->sum('amount');
-                $credit = VoucherEntry::whereIn('voucher_id', $voucherIds)
-                                      ->where('account_id', $acc->id)
-                                      ->where('entry_type', 'Credit')
-                                      ->sum('amount');
-                $acc->total = $normalBalance == 'Debit' ? ($debit - $credit) : ($credit - $debit);
-            }
-            return $accounts->filter(function($acc) { return $acc->total != 0; });
-        };
-
-        // --- PART 1: TRADING ACCOUNT (Top Section) ---
         
-        $items = Item::all();
-        $totalOpeningStock = 0;
-        $totalClosingStock = 0;
-
-        // Calculate Historical Inventory Valuations
-        foreach ($items as $item) {
-            
-            // A. Calculate Opening Stock (Inventory state strictly BEFORE start_date)
-            $inBefore = InventoryMovement::where('item_id', $item->id)
-                ->where('movement_type', 'In')
-                ->whereHas('voucher', function($q) use ($startDate) {
-                    $q->whereDate('voucher_date', '<', $startDate);
-                })->sum('quantity');
-
-            $outBefore = InventoryMovement::where('item_id', $item->id)
-                ->where('movement_type', 'Out')
-                ->whereHas('voucher', function($q) use ($startDate) {
-                    $q->whereDate('voucher_date', '<', $startDate);
-                })->sum('quantity');
-
-            $historicalOpeningQty = $item->opening_stock + $inBefore - $outBefore;
-            $totalOpeningStock += ($historicalOpeningQty * $item->purchase_rate);
-
-            // B. Calculate Closing Stock (Inventory state UP TO end_date)
-            $inUpTo = InventoryMovement::where('item_id', $item->id)
-                ->where('movement_type', 'In')
-                ->whereHas('voucher', function($q) use ($endDate) {
-                    $q->whereDate('voucher_date', '<=', $endDate);
-                })->sum('quantity');
-
-            $outUpTo = InventoryMovement::where('item_id', $item->id)
-                ->where('movement_type', 'Out')
-                ->whereHas('voucher', function($q) use ($endDate) {
-                    $q->whereDate('voucher_date', '<=', $endDate);
-                })->sum('quantity');
-
-            $historicalClosingQty = $item->opening_stock + $inUpTo - $outUpTo;
-            $totalClosingStock += ($historicalClosingQty * $item->purchase_rate);
-        }
-
-        // DYNAMIC FIX: Grab ALL Direct Expenses (Purchases) regardless of ID
-        $purchases = $getBalances('Direct Expenses', 'Debit');
-        $totalPurchases = $purchases->sum('total');
-
-        // DYNAMIC FIX: Grab ALL Direct Incomes (Sales) regardless of ID
-        $sales = $getBalances('Direct Incomes', 'Credit');
-        $totalSales = $sales->sum('total');
-
-        // Trading Account Balancing Math
-        $leftTrading = $totalOpeningStock + $totalPurchases;
-        $rightTrading = $totalSales + $totalClosingStock;
-
-        $grossProfit = $rightTrading > $leftTrading ? $rightTrading - $leftTrading : 0;
-        $grossLoss = $leftTrading > $rightTrading ? $leftTrading - $rightTrading : 0;
-        
-        $tradingTotal = max($leftTrading, $rightTrading);
-
-
-        // --- PART 2: PROFIT & LOSS ACCOUNT (Bottom Section) ---
-
-        $indirectExpenses = $getBalances('Indirect Expenses', 'Debit');
-        $totalIndirectExpenses = $indirectExpenses->sum('total');
-
-        $indirectIncomes = $getBalances('Indirect Incomes', 'Credit');
-        $totalIndirectIncomes = $indirectIncomes->sum('total');
-
-        $totalLeftPL = $grossLoss + $totalIndirectExpenses;
-        $totalRightPL = $grossProfit + $totalIndirectIncomes;
-
-        $netProfit = $totalRightPL > $totalLeftPL ? $totalRightPL - $totalLeftPL : 0;
-        $netLoss = $totalLeftPL > $totalRightPL ? $totalLeftPL - $totalRightPL : 0;
-
-        $plTotal = max($totalLeftPL, $totalRightPL);
-
-        // Format dates nicely for the view
         $displayStartDate = Carbon::parse($startDate)->format('d-M-Y');
         $displayEndDate = Carbon::parse($endDate)->format('d-M-Y');
 
-        return view('report', compact(
-            'startDate', 'endDate', 'displayStartDate', 'displayEndDate',
-            'totalOpeningStock', 'totalClosingStock',
-            'purchases', 'totalPurchases',
-            'sales', 'totalSales',
-            'grossProfit', 'grossLoss', 'tradingTotal',
-            'indirectExpenses', 'totalIndirectExpenses',
-            'indirectIncomes', 'totalIndirectIncomes',
-            'netProfit', 'netLoss', 'plTotal'
-        ));
+        // ==========================================
+        // REPORT 1: PROFIT & LOSS (Your Existing Logic)
+        // ==========================================
+        if ($reportType === 'Profit_Loss') {
+            $voucherIds = Voucher::whereDate('voucher_date', '>=', $startDate)->whereDate('voucher_date', '<=', $endDate)->pluck('id');
+
+            $getBalances = function($groupType, $normalBalance) use ($voucherIds) {
+                $accounts = Account::where('group_type', $groupType)->get();
+                foreach($accounts as $acc) {
+                    $debit = VoucherEntry::whereIn('voucher_id', $voucherIds)->where('account_id', $acc->id)->where('entry_type', 'Debit')->sum('amount');
+                    $credit = VoucherEntry::whereIn('voucher_id', $voucherIds)->where('account_id', $acc->id)->where('entry_type', 'Credit')->sum('amount');
+                    $acc->total = $normalBalance == 'Debit' ? ($debit - $credit) : ($credit - $debit);
+                }
+                return $accounts->filter(function($acc) { return $acc->total != 0; });
+            };
+
+            $items = Item::all();
+            $totalOpeningStock = 0;
+            $totalClosingStock = 0;
+
+            foreach ($items as $item) {
+                $inBefore = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'In')->whereHas('voucher', function($q) use ($startDate) { $q->whereDate('voucher_date', '<', $startDate); })->sum('quantity');
+                $outBefore = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'Out')->whereHas('voucher', function($q) use ($startDate) { $q->whereDate('voucher_date', '<', $startDate); })->sum('quantity');
+                $totalOpeningStock += (($item->opening_stock + $inBefore - $outBefore) * $item->purchase_rate);
+
+                $inUpTo = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'In')->whereHas('voucher', function($q) use ($endDate) { $q->whereDate('voucher_date', '<=', $endDate); })->sum('quantity');
+                $outUpTo = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'Out')->whereHas('voucher', function($q) use ($endDate) { $q->whereDate('voucher_date', '<=', $endDate); })->sum('quantity');
+                $totalClosingStock += (($item->opening_stock + $inUpTo - $outUpTo) * $item->purchase_rate);
+            }
+
+            $purchases = $getBalances('Direct Expenses', 'Debit');
+            $totalPurchases = $purchases->sum('total');
+            $sales = $getBalances('Direct Incomes', 'Credit');
+            $totalSales = $sales->sum('total');
+
+            $leftTrading = $totalOpeningStock + $totalPurchases;
+            $rightTrading = $totalSales + $totalClosingStock;
+            $grossProfit = $rightTrading > $leftTrading ? $rightTrading - $leftTrading : 0;
+            $grossLoss = $leftTrading > $rightTrading ? $leftTrading - $rightTrading : 0;
+            $tradingTotal = max($leftTrading, $rightTrading);
+
+            $indirectExpenses = $getBalances('Indirect Expenses', 'Debit');
+            $totalIndirectExpenses = $indirectExpenses->sum('total');
+            $indirectIncomes = $getBalances('Indirect Incomes', 'Credit');
+            $totalIndirectIncomes = $indirectIncomes->sum('total');
+
+            $totalLeftPL = $grossLoss + $totalIndirectExpenses;
+            $totalRightPL = $grossProfit + $totalIndirectIncomes;
+            $netProfit = $totalRightPL > $totalLeftPL ? $totalRightPL - $totalLeftPL : 0;
+            $netLoss = $totalLeftPL > $totalRightPL ? $totalLeftPL - $totalRightPL : 0;
+            $plTotal = max($totalLeftPL, $totalRightPL);
+
+            return view('report', compact('startDate', 'endDate', 'displayStartDate', 'displayEndDate', 'reportType', 'totalOpeningStock', 'totalClosingStock', 'purchases', 'totalPurchases', 'sales', 'totalSales', 'grossProfit', 'grossLoss', 'tradingTotal', 'indirectExpenses', 'totalIndirectExpenses', 'indirectIncomes', 'totalIndirectIncomes', 'netProfit', 'netLoss', 'plTotal'));
+        }
+
+        // ==========================================
+        // REPORT 2: TRANSACTION LISTS & RATIOS
+        // ==========================================
+        $dbType = str_replace('_', ' ', $reportType); // Convert 'Sales_Return' to 'Sales Return'
+        if ($reportType === 'Stock_Adjustment') $dbType = 'Journal'; // Map your custom name back to DB
+
+        $vouchers = Voucher::with(['entries.account', 'inventoryMovements.item'])
+            ->where('voucher_type', $dbType)
+            ->whereDate('voucher_date', '>=', $startDate)
+            ->whereDate('voucher_date', '<=', $endDate)
+            ->orderBy('voucher_date', 'desc')
+            ->get();
+
+        $totalAmount = 0;
+        $productionStats = ['raw' => 0, 'rice' => 0, 'byproduct' => 0, 'yield' => 0];
+
+        // Unique logic for Production (Calculating Yield Ratio)
+        if ($reportType === 'Production') {
+            foreach($vouchers as $v) {
+                foreach($v->inventoryMovements as $m) {
+                    if (!$m->item) continue;
+                    if ($m->movement_type == 'Out' && $m->item->category == 'Raw Material') $productionStats['raw'] += $m->quantity;
+                    if ($m->movement_type == 'In' && $m->item->category == 'Finished Goods') $productionStats['rice'] += $m->quantity;
+                    if ($m->movement_type == 'In' && $m->item->category == 'Byproduct') $productionStats['byproduct'] += $m->quantity;
+                }
+            }
+            // Yield % = (Total Rice Produced / Total Paddy Used) * 100
+            $productionStats['yield'] = $productionStats['raw'] > 0 ? ($productionStats['rice'] / $productionStats['raw']) * 100 : 0;
+        } 
+        // Logic for all other financial transactions (Summing the amounts)
+        else {
+            foreach($vouchers as $v) {
+                $vAmount = $v->entries->where('entry_type', 'Debit')->sum('amount');
+                $v->display_amount = $vAmount;
+                $totalAmount += $vAmount;
+            }
+        }
+
+        return view('report', compact('startDate', 'endDate', 'displayStartDate', 'displayEndDate', 'reportType', 'vouchers', 'totalAmount', 'productionStats'));
     }
 }

@@ -142,8 +142,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/run-other-income', [App\Http\Controllers\OtherIncomeController::class, 'store']);
     Route::get('/run-other-income', function () { return redirect('/other-income'); }); 
 
-    // --- REPORTS & DAYBOOK ---
-    Route::get('/report', [App\Http\Controllers\ReportController::class, 'profitAndLoss']);
+// --- REPORTS & DAYBOOK ---
+    Route::get('/report', [App\Http\Controllers\ReportController::class, 'index']);
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
     Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
     Route::post('/delete-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'destroy']);
