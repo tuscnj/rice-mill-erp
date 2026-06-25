@@ -10,19 +10,34 @@ use Illuminate\Support\Facades\DB;
 
 class OtherIncomeController extends Controller
 {
-    public function store(Request $request)
+  public function update(Request $request, $id)
     {
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $id) {
+            $voucher = Voucher::with('entries')->findOrFail($id);
 
-            // 1. Create the Other Income Voucher
-            $voucher = Voucher::create([
-                'voucher_type' => 'Other Income',
+            // 1. REVERSE THE OLD LEDGER ENTRIES
+            foreach ($voucher->entries as $entry) {
+                if ($entry->entry_type == 'Debit') {
+                    // Reverse the cash debit (decreases available money back to original)
+                    Account::where('id', $entry->account_id)->decrement('balance', $entry->amount);
+                } elseif ($entry->entry_type == 'Credit') {
+                    // Reverse the income credit 
+                    Account::where('id', $entry->account_id)->increment('balance', $entry->amount);
+                }
+            }
+
+            // Delete the old entry records completely
+            $voucher->entries()->delete();
+
+            // 2. UPDATE THE VOUCHER DETAILS
+            $voucher->update([
                 'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => $request->reference_number,
                 'notes' => $request->notes ?? 'Other income received'
             ]);
 
-            // 2. Debit the Cash/Bank (Increases available money)
+            // 3. CREATE THE NEW LEDGER ENTRIES
+            // Debit the Cash/Bank (Increases available money)
             VoucherEntry::create([
                 'voucher_id' => $voucher->id,
                 'account_id' => $request->cash_id,
@@ -31,7 +46,7 @@ class OtherIncomeController extends Controller
             ]);
             Account::where('id', $request->cash_id)->increment('balance', $request->amount);
 
-            // 3. Credit the Other Income Account (Increases income)
+            // Credit the Other Income Account
             VoucherEntry::create([
                 'voucher_id' => $voucher->id,
                 'account_id' => $request->income_id,
@@ -39,9 +54,9 @@ class OtherIncomeController extends Controller
                 'entry_type' => 'Credit'
             ]);
             Account::where('id', $request->income_id)->decrement('balance', $request->amount);
-
         });
 
-        return redirect('/');
+        // Redirect back to the Daybook
+        return redirect('/transactions')->with('success', 'Other Income updated successfully!');
     }
 }

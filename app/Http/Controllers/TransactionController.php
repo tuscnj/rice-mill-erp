@@ -135,9 +135,14 @@ class TransactionController extends Controller
             return view('edit-expense', compact('voucher'));
         }
 
-        // ROUTE 5: RECEIPT
+// ROUTE 5: RECEIPT
         elseif ($voucher->voucher_type == 'Receipt') {
             return view('edit-receipt', compact('voucher'));
+        }
+
+        // ROUTE 6: OTHER INCOME
+        elseif ($voucher->voucher_type == 'Other Income') {
+            return view('edit-other-income', compact('voucher'));
         }
 
         // FALLBACK: If it's a type we haven't built an edit screen for yet
