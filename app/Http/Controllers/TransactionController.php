@@ -140,9 +140,22 @@ class TransactionController extends Controller
             return view('edit-receipt', compact('voucher'));
         }
 
-        // ROUTE 6: OTHER INCOME
+// ROUTE 6: OTHER INCOME
         elseif ($voucher->voucher_type == 'Other Income') {
             return view('edit-other-income', compact('voucher'));
+        }
+
+        // ROUTE 7: SALES RETURN
+        elseif ($voucher->voucher_type == 'Sales Return') {
+            $customers = Account::where('group_type', 'Sundry Debtors')->get();
+            $units = Unit::all();
+            $items = Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get();
+
+            // Find the customer ID (The account that was Credited during the return)
+            $customerEntry = $voucher->entries->where('entry_type', 'Credit')->first();
+            $partyId = $customerEntry ? $customerEntry->account_id : null;
+
+            return view('edit-sales-return', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
 
         // FALLBACK: If it's a type we haven't built an edit screen for yet

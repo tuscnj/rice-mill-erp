@@ -13,181 +13,97 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
-    public function store(Request $request)
+   public function update(Request $request, $id)
     {
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $id) {
+            $voucher = Voucher::with(['entries', 'inventoryMovements'])->findOrFail($id);
+
+            // 1. REVERSE PHYSICAL STOCK (Remove the returned items back out of stock)
+            foreach ($voucher->inventoryMovements as $movement) {
+                if ($movement->movement_type == 'In') {
+                    Item::where('id', $movement->item_id)->decrement('current_stock', $movement->quantity);
+                }
+            }
+            $voucher->inventoryMovements()->delete();
+
+            // 2. REVERSE FINANCIAL BALANCES
+            foreach ($voucher->entries as $entry) {
+                $account = Account::find($entry->account_id);
+                if ($account && $account->group_type == 'Sundry Debtors' && $entry->entry_type == 'Credit') {
+                    // Reverse customer credit (adds balance back)
+                    $account->increment('balance', $entry->amount);
+                }
+            }
+            $voucher->entries()->delete();
+
+            // 3. UPDATE VOUCHER HEADER
+            $narration = trim((string) $request->input('narration', ''));
+            if ($narration === '') {
+                $narration = 'Sales return';
+            }
+
+            $voucher->update([
+                'voucher_date' => $request->input('voucher_date', now()),
+                'reference_number' => $request->invoice_number,
+                'notes' => $narration,
+            ]);
+
+            // 4. PROCESS NEW ITEMS AND BALANCES
             $itemIds = $request->input('item_id', []);
             $quantities = $request->input('quantity', []);
             $unitIds = $request->input('unit_id', []);
             $rates = $request->input('rate', []);
-
             $totalAmount = 0;
 
-            // 1. Create Voucher Header
-            $voucher = Voucher::create([
-                'voucher_type' => 'Sales',
-                'voucher_date' => $request->input('voucher_date', now()),
-                'reference_number' => $request->invoice_number,
-                'notes' => $request->narration ?? 'Sales transaction'
-            ]);
-
-            // 2. Process each item row safely
             foreach ($itemIds as $index => $itemId) {
-                if (empty($itemId) || !isset($quantities[$index]) || !isset($rates[$index])) {
+                if (empty($itemId) || !isset($quantities[$index]) || !isset($unitIds[$index]) || !isset($rates[$index])) {
                     continue;
                 }
 
                 $qty = (float) $quantities[$index];
                 $rate = (float) $rates[$index];
 
-                if ($qty <= 0) continue;
+                if ($qty <= 0 || $rate < 0) continue;
 
-                $conversionRate = 1; 
-                if (isset($unitIds[$index]) && !empty($unitIds[$index])) {
-                    $unit = Unit::find($unitIds[$index]);
-                    if ($unit && $unit->conversion_rate > 0) {
-                        $conversionRate = $unit->conversion_rate;
-                    }
-                }
-                
-                $baseQuantity = $qty * $conversionRate;
+                $unit = Unit::findOrFail($unitIds[$index]);
+                $baseQuantity = $qty * $unit->conversion_rate;
                 $lineTotal = $qty * $rate;
                 $totalAmount += $lineTotal;
 
-                $ratePerBaseUnit = $baseQuantity > 0 ? ($lineTotal / $baseQuantity) : 0;
-
+                // Bring new stock In
                 InventoryMovement::create([
                     'voucher_id' => $voucher->id,
                     'item_id' => $itemId,
-                    'movement_type' => 'Out',
+                    'movement_type' => 'In',
                     'quantity' => $baseQuantity,
-                    'rate' => $ratePerBaseUnit,
+                    'rate' => $rate,
                 ]);
-                
-                Item::where('id', $itemId)->decrement('current_stock', $baseQuantity);
+                Item::where('id', $itemId)->increment('current_stock', $baseQuantity);
             }
 
-            // 3. Update Financial Ledgers
+            // 5. PROCESS NEW FINANCIAL ENTRIES
             if ($totalAmount > 0) {
-                $customer = Account::find($request->party_id);
-                if (!$customer) {
-                    throw new \Exception("Invalid Customer Selected. Please select a party from the dropdown.");
-                }
+                $party = Account::findOrFail($request->party_id);
 
-                $salesAccount = Account::firstOrCreate(
-                    ['name' => 'Sales Account'],
-                    ['group_type' => 'Direct Incomes', 'balance' => 0]
-                );
-
+                // Credit the customer (they owe less)
                 VoucherEntry::create([
                     'voucher_id' => $voucher->id,
-                    'account_id' => $customer->id,
+                    'account_id' => $party->id,
                     'amount' => $totalAmount,
-                    'entry_type' => 'Debit'
+                    'entry_type' => 'Credit',
                 ]);
+                $party->decrement('balance', $totalAmount);
 
+                // Debit the Sales Account (reversing revenue)
                 VoucherEntry::create([
                     'voucher_id' => $voucher->id,
-                    'account_id' => $salesAccount->id, 
+                    'account_id' => 5, // Sales Account ID
                     'amount' => $totalAmount,
-                    'entry_type' => 'Credit'
+                    'entry_type' => 'Debit',
                 ]);
-
-                $customer->increment('balance', $totalAmount);
-                $salesAccount->increment('balance', $totalAmount);
             }
         });
 
-        return redirect('/sales');
-    }
-
-    public function update(Request $request, $id)
-    {
-        DB::transaction(function () use ($request, $id) {
-            $voucher = Voucher::findOrFail($id);
-
-            // 1. REVERSE OLD STOCK & FINANCIALS
-            $oldMovements = InventoryMovement::where('voucher_id', $id)->get();
-            foreach ($oldMovements as $movement) {
-                if ($movement->movement_type == 'Out') {
-                    // Sales deducts stock, so reversing it means adding it back
-                    Item::where('id', $movement->item_id)->increment('current_stock', $movement->quantity);
-                }
-            }
-            InventoryMovement::where('voucher_id', $id)->delete();
-
-            $oldEntries = VoucherEntry::where('voucher_id', $id)->get();
-            foreach ($oldEntries as $entry) {
-                $account = Account::find($entry->account_id);
-                if ($account) {
-                    if ($account->group_type == 'Sundry Debtors') {
-                        // Reversing a Debit to Customer
-                        $entry->entry_type == 'Debit' ? $account->decrement('balance', $entry->amount) : $account->increment('balance', $entry->amount);
-                    } elseif ($account->group_type == 'Direct Incomes') {
-                        // Reversing a Credit to Sales
-                        if ($entry->entry_type == 'Credit') $account->decrement('balance', $entry->amount);
-                    }
-                }
-            }
-            VoucherEntry::where('voucher_id', $id)->delete();
-
-            // 2. UPDATE VOUCHER HEADER
-            $voucher->update([
-                'reference_number' => $request->invoice_number,
-                'notes' => $request->narration ?? 'Sales transaction'
-            ]);
-
-            // 3. APPLY NEW DATA
-            $itemIds = $request->input('item_id', []);
-            $quantities = $request->input('quantity', []);
-            $unitIds = $request->input('unit_id', []);
-            $rates = $request->input('rate', []);
-
-            $totalAmount = 0;
-
-            foreach ($itemIds as $index => $itemId) {
-                if (empty($itemId) || !isset($quantities[$index]) || !isset($rates[$index])) continue;
-
-                $qty = (float) $quantities[$index];
-                $rate = (float) $rates[$index];
-                if ($qty <= 0) continue;
-
-                $conversionRate = 1; 
-                if (isset($unitIds[$index]) && !empty($unitIds[$index])) {
-                    $unit = Unit::find($unitIds[$index]);
-                    if ($unit && $unit->conversion_rate > 0) $conversionRate = $unit->conversion_rate;
-                }
-                
-                $baseQuantity = $qty * $conversionRate;
-                $lineTotal = $qty * $rate;
-                $totalAmount += $lineTotal;
-
-                $ratePerBaseUnit = $baseQuantity > 0 ? ($lineTotal / $baseQuantity) : 0;
-
-                InventoryMovement::create([
-                    'voucher_id' => $voucher->id,
-                    'item_id' => $itemId,
-                    'movement_type' => 'Out',
-                    'quantity' => $baseQuantity,
-                    'rate' => $ratePerBaseUnit,
-                ]);
-                
-                Item::where('id', $itemId)->decrement('current_stock', $baseQuantity);
-            }
-
-            // 4. RE-APPLY FINANCIAL LEDGERS
-            if ($totalAmount > 0) {
-                $customer = Account::findOrFail($request->party_id);
-                $salesAccount = Account::where('name', 'Sales Account')->first();
-
-                VoucherEntry::create(['voucher_id' => $voucher->id, 'account_id' => $customer->id, 'amount' => $totalAmount, 'entry_type' => 'Debit']);
-                VoucherEntry::create(['voucher_id' => $voucher->id, 'account_id' => $salesAccount->id, 'amount' => $totalAmount, 'entry_type' => 'Credit']);
-
-                $customer->increment('balance', $totalAmount);
-                $salesAccount->increment('balance', $totalAmount);
-            }
-        });
-
-        return redirect('/transactions');
+        return redirect('/transactions')->with('success', 'Sales Return updated successfully!');
     }
 }
