@@ -70,10 +70,12 @@
                                 {{ $voucher->voucher_type == 'Receipt' ? 'bg-teal-50 text-teal-700 border border-teal-200' : '' }}
                                 {{ $voucher->voucher_type == 'Other Income' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : '' }}
                                 {{ $voucher->voucher_type == 'Expense' ? 'bg-rose-50 text-rose-700 border border-rose-200' : '' }}
-                                {{ $voucher->voucher_type == 'Journal' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : '' }}
+                                {{ in_array($voucher->voucher_type, ['Journal', 'Stock Adjustment']) ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : '' }}
                                 {{ $voucher->voucher_type == 'Balance Transfer' ? 'bg-amber-50 text-amber-700 border border-amber-200' : '' }}
                                 {{ $voucher->voucher_type == 'Opening Balance' ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
-                                {{ $voucher->voucher_type }}
+                                
+                                {{-- Force Journal to display as Stock Adjustment --}}
+                                {{ $voucher->voucher_type == 'Journal' ? 'Stock Adjustment' : $voucher->voucher_type }}
                             </span>
                         </td>
                         <td class="p-4 text-gray-600 text-sm font-mono align-top">{{ $voucher->reference_number ?? 'N/A' }}</td>
@@ -204,10 +206,12 @@
                                 {{ $voucher->voucher_type == 'Receipt' ? 'bg-teal-50 text-teal-700 border border-teal-100' : '' }}
                                 {{ $voucher->voucher_type == 'Other Income' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : '' }}
                                 {{ $voucher->voucher_type == 'Expense' ? 'bg-rose-50 text-rose-700 border border-rose-100' : '' }}
-                                {{ $voucher->voucher_type == 'Journal' ? 'bg-cyan-50 text-cyan-700 border border-cyan-100' : '' }}
+                                {{ in_array($voucher->voucher_type, ['Journal', 'Stock Adjustment']) ? 'bg-cyan-50 text-cyan-700 border border-cyan-100' : '' }}
                                 {{ $voucher->voucher_type == 'Balance Transfer' ? 'bg-amber-50 text-amber-700 border border-amber-100' : '' }}
                                 {{ $voucher->voucher_type == 'Opening Balance' ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
-                            {{ $voucher->voucher_type }}
+                            
+                            {{-- Force Journal to display as Stock Adjustment on Mobile too --}}
+                            {{ $voucher->voucher_type == 'Journal' ? 'Stock Adjustment' : $voucher->voucher_type }}
                         </span>
                     </div>
 
