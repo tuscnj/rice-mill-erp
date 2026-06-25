@@ -75,7 +75,7 @@ class TransactionController extends Controller
         return Response::stream($callback, 200, $headers);
     }
 
-// THE TRAFFIC COP: Routes to the correct edit screen based on transaction type
+    // THE TRAFFIC COP: Routes to the correct edit screen based on transaction type
     public function edit($id)
     {
         $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
@@ -94,7 +94,6 @@ class TransactionController extends Controller
 
         // ROUTE 2: MILL PRODUCTION
         elseif ($voucher->voucher_type == 'Production') {
-            // ... (keep your existing Production logic here) ...
             $rawMaterials = Item::where('category', 'Raw Material')->get();
             $finishedGoods = Item::where('category', 'Finished Goods')->get();
             $byproducts = Item::where('category', 'Byproduct')->get();
@@ -131,6 +130,13 @@ class TransactionController extends Controller
             return view('edit-sales', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
 
+        // ROUTE 4: EXPENSE
+        elseif ($voucher->voucher_type == 'Expense') {
+            // The Blade file has internal logic to fetch the dropdowns, so we just pass the voucher
+            return view('edit-expense', compact('voucher'));
+        }
+
+        // FALLBACK: If it's a type we haven't built an edit screen for yet
         return redirect('/transactions')->with('error', 'The full edit screen for ' . $voucher->voucher_type . ' is currently under construction!');
     }
     
