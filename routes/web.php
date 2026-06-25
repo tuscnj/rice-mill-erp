@@ -262,3 +262,5 @@ Route::post('/update-receipt/{id}', [App\Http\Controllers\ReceiptController::cla
 Route::post('/update-other-income/{id}', [App\Http\Controllers\OtherIncomeController::class, 'update']); // <-- ADD THIS LINE
 Route::post('/update-other-income/{id}', [App\Http\Controllers\OtherIncomeController::class, 'update']);
 Route::post('/update-sales-return/{id}', [App\Http\Controllers\SalesReturnController::class, 'update']); // <-- ADD THIS LINE
+Route::post('/update-sales-return/{id}', [App\Http\Controllers\SalesReturnController::class, 'update']);
+Route::post('/update-balance-transfer/{id}', [App\Http\Controllers\BalanceTransferController::class, 'update']); // <-- ADD THIS LINE
