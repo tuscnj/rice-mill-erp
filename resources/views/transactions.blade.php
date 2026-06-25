@@ -63,16 +63,12 @@
                         <td class="p-4 align-top">
                             <span class="px-3 py-1 rounded-lg text-xs font-bold inline-block
                                 {{ $voucher->voucher_type == 'Purchase' ? 'bg-blue-50 text-blue-700 border border-blue-200' : '' }}
-                                {{ $voucher->voucher_type == 'Purchase Return' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : '' }}
                                 {{ $voucher->voucher_type == 'Sales' ? 'bg-purple-50 text-purple-700 border border-purple-200' : '' }}
-                                {{ $voucher->voucher_type == 'Sales Return' ? 'bg-pink-50 text-pink-700 border border-pink-200' : '' }}
                                 {{ $voucher->voucher_type == 'Production' ? 'bg-green-50 text-green-700 border border-green-200' : '' }}
                                 {{ $voucher->voucher_type == 'Receipt' ? 'bg-teal-50 text-teal-700 border border-teal-200' : '' }}
                                 {{ $voucher->voucher_type == 'Other Income' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : '' }}
                                 {{ $voucher->voucher_type == 'Expense' ? 'bg-rose-50 text-rose-700 border border-rose-200' : '' }}
-                                {{ in_array($voucher->voucher_type, ['Journal', 'Stock Adjustment']) ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : '' }}
-                                {{ $voucher->voucher_type == 'Balance Transfer' ? 'bg-amber-50 text-amber-700 border border-amber-200' : '' }}
-                                {{ $voucher->voucher_type == 'Opening Balance' ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
+                                {{ in_array($voucher->voucher_type, ['Opening Balance', 'Journal', 'Balance Transfer']) ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
                                 {{ $voucher->voucher_type }}
                             </span>
                         </td>
@@ -197,16 +193,12 @@
                         </div>
                         <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
                                 {{ $voucher->voucher_type == 'Purchase' ? 'bg-blue-50 text-blue-700 border border-blue-100' : '' }}
-                                {{ $voucher->voucher_type == 'Purchase Return' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : '' }}
                                 {{ $voucher->voucher_type == 'Sales' ? 'bg-purple-50 text-purple-700 border border-purple-100' : '' }}
-                                {{ $voucher->voucher_type == 'Sales Return' ? 'bg-pink-50 text-pink-700 border border-pink-100' : '' }}
                                 {{ $voucher->voucher_type == 'Production' ? 'bg-green-50 text-green-700 border border-green-100' : '' }}
                                 {{ $voucher->voucher_type == 'Receipt' ? 'bg-teal-50 text-teal-700 border border-teal-100' : '' }}
                                 {{ $voucher->voucher_type == 'Other Income' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : '' }}
                                 {{ $voucher->voucher_type == 'Expense' ? 'bg-rose-50 text-rose-700 border border-rose-100' : '' }}
-                                {{{ in_array($voucher->voucher_type, ['Journal', 'Stock Adjustment']) ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : '' }}
-                                {{ $voucher->voucher_type == 'Balance Transfer' ? 'bg-amber-50 text-amber-700 border border-amber-100' : '' }}
-                                {{ $voucher->voucher_type == 'Opening Balance' ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
+                                {{ in_array($voucher->voucher_type, ['Opening Balance', 'Journal', 'Balance Transfer']) ? 'bg-slate-100 text-slate-700 border border-slate-200' : '' }}">
                             {{ $voucher->voucher_type }}
                         </span>
                     </div>
