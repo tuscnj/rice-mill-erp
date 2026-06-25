@@ -169,6 +169,19 @@ class TransactionController extends Controller
             return view('edit-stock-adjustment', compact('voucher', 'items'));
         }
 
+        // ROUTE 10: PURCHASE RETURN
+        elseif ($voucher->voucher_type == 'Purchase Return') {
+            $suppliers = Account::where('group_type', 'Sundry Creditors')->get();
+            $units = Unit::all();
+            $items = Item::orderBy('category')->orderBy('name')->get();
+
+            // Find the supplier ID (The account that was Debited during the return)
+            $supplierEntry = $voucher->entries->where('entry_type', 'Debit')->first();
+            $partyId = $supplierEntry ? $supplierEntry->account_id : null;
+
+            return view('edit-purchase-return', compact('voucher', 'suppliers', 'units', 'items', 'partyId'));
+        }
+
         // FALLBACK: If it's a type we haven't built an edit screen for yet
         return redirect('/transactions')->with('error', 'The full edit screen for ' . $voucher->voucher_type . ' is currently under construction!');
     }
