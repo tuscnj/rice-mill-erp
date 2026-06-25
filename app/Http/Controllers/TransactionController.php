@@ -130,10 +130,14 @@ class TransactionController extends Controller
             return view('edit-sales', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
 
-        // ROUTE 4: EXPENSE
+ // ROUTE 4: EXPENSE
         elseif ($voucher->voucher_type == 'Expense') {
-            // The Blade file has internal logic to fetch the dropdowns, so we just pass the voucher
             return view('edit-expense', compact('voucher'));
+        }
+
+        // ROUTE 5: RECEIPT
+        elseif ($voucher->voucher_type == 'Receipt') {
+            return view('edit-receipt', compact('voucher'));
         }
 
         // FALLBACK: If it's a type we haven't built an edit screen for yet
