@@ -1,10 +1,11 @@
 public function update(Request $request, $id)
     {
         DB::transaction(function () use ($request, $id) {
-            $voucher = Voucher::with('voucherEntries')->findOrFail($id);
+            // Changed 'voucherEntries' to 'entries' here
+            $voucher = Voucher::with('entries')->findOrFail($id);
 
             // 1. REVERSE THE OLD LEDGER ENTRIES
-            foreach ($voucher->voucherEntries as $entry) {
+            foreach ($voucher->entries as $entry) {
                 if ($entry->entry_type == 'Debit') {
                     // Reverse the expense debit (decreases your total expenses)
                     Account::where('id', $entry->account_id)->decrement('balance', $entry->amount);
@@ -15,7 +16,7 @@ public function update(Request $request, $id)
             }
 
             // Delete the old entry records completely
-            $voucher->voucherEntries()->delete();
+            $voucher->entries()->delete();
 
             // 2. UPDATE THE VOUCHER DETAILS
             $voucher->update([

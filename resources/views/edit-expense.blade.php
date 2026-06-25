@@ -7,9 +7,9 @@
     $banks = \App\Models\Account::where('group_type', 'Cash')->get();
     $expenses = \App\Models\Account::where('group_type', 'Indirect Expenses')->get();
     
-    // Extract existing values to pre-fill the form perfectly
-    $oldDebit = $voucher->voucherEntries->where('entry_type', 'Debit')->first();
-    $oldCredit = $voucher->voucherEntries->where('entry_type', 'Credit')->first();
+    // Extract existing values using the correct 'entries' relationship name
+    $oldDebit = $voucher->entries->where('entry_type', 'Debit')->first();
+    $oldCredit = $voucher->entries->where('entry_type', 'Credit')->first();
     
     $currentExpenseId = $oldDebit ? $oldDebit->account_id : null;
     $currentCashId = $oldCredit ? $oldCredit->account_id : null;
