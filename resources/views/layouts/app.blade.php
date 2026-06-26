@@ -63,7 +63,7 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-y-auto w-full bg-slate-50">
-        <header class="bg-white shadow-sm border-b border-gray-200 p-4 sm:px-8 flex justify-between items-center sticky top-0 z-30">
+        <header class="bg-white shadow-sm border-b border-gray-200 p-4 sm:px-8 flex justify-between items-center sticky top-0 z-30 print:hidden">
             <div class="flex items-center gap-3 sm:gap-4">
                 <button onclick="toggleSidebar()" class="md:hidden p-1 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -71,6 +71,7 @@
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800 truncate">@yield('title', 'Control Center')</h2>
             </div>
             
+            {{-- Dynamic User Badge --}}
             @if(auth()->check())
                 <div class="text-gray-500 text-xs sm:text-sm font-semibold hidden sm:block">
                     {{ auth()->user()->name }} 
