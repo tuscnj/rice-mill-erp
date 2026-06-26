@@ -9,14 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class StockAdjustmentController extends Controller
 {
-
-public function index()
-    {
-        $items = \App\Models\Item::orderBy('name')->get();
-        return view('stock-adjustment', ['items' => $items]);
-    }
-
-// 1. Loads the main Stock Adjustment form
+    // 1. Loads the main Stock Adjustment form
     public function index()
     {
         $items = Item::orderBy('name')->get();
@@ -39,7 +32,7 @@ public function index()
 
             // Create a Journal/Adjustment Voucher
             $voucher = Voucher::create([
-                'voucher_type' => 'Journal', // Keeping it as Journal so it shows up cleanly in Daybook
+                'voucher_type' => 'Journal', // Keeping it as Journal for database consistency
                 'voucher_date' => $request->input('voucher_date', now()),
                 'reference_number' => 'ADJ',
                 'notes' => 'Stock Adjustment: ' . $request->notes
@@ -65,7 +58,7 @@ public function index()
         });
 
         // Redirect back to the Live Stock Dashboard
-        return redirect('/stock');
+        return redirect('/stock')->with('success', 'Stock Adjustment recorded successfully!');
     }
 
     // 3. Modifies an existing Stock Adjustment from the Daybook
@@ -98,7 +91,7 @@ public function index()
             $qty = $request->quantity;
             $type = $request->adjustment_type;
             
-            // Extract the original prefix (e.g. "Stock Adjustment: Damaged goods" -> "Damaged goods")
+            // Extract the original prefix if it exists so we don't double up
             $cleanNotes = str_replace('Stock Adjustment: ', '', $request->notes);
 
             // 3. UPDATE VOUCHER DETAILS
