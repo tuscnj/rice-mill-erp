@@ -38,14 +38,18 @@
             <a href="/receipt" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💰 Receive Money</a>
             <a href="/expense" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📉 Log Expense</a>
             <a href="/other-income" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💵 Log Other Income</a>
-            <a href="/report" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📈 P&L Report</a>
-
-            <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Directories</div>
-            <a href="/accounts" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📒 Accounts & Ledgers</a>
-            <a href="/units" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚖️ Unit Settings</a>
             
-            <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
-            <a href="/transactions" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-red-400">📖 Daybook (Edits)</a>
+            {{-- 🚨 SECURE ZONE: Only Admins can see these links --}}
+            @if(auth()->check() && auth()->user()->role === 'admin')
+                <a href="/report" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📈 Master Reports</a>
+
+                <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Directories</div>
+                <a href="/accounts" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📒 Accounts & Ledgers</a>
+                <a href="/units" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚖️ Unit Settings</a>
+                
+                <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
+                <a href="/transactions" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-red-400">📖 Daybook (Edits)</a>
+            @endif
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Account</div>
             <form action="/logout" method="POST" class="px-6 py-2.5">
@@ -65,8 +69,17 @@
                 </button>
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800 truncate">@yield('title', 'Control Center')</h2>
             </div>
-            <div class="text-gray-500 text-xs sm:text-sm font-semibold hidden sm:block">Tusar Ahmmed (Admin)</div>
-            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm sm:hidden">TA</div>
+            
+            {{-- Dynamic User Badge --}}
+            @if(auth()->check())
+                <div class="text-gray-500 text-xs sm:text-sm font-semibold hidden sm:block">
+                    {{ auth()->user()->name }} 
+                    <span class="text-blue-600">({{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }})</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm sm:hidden">
+                    {{ substr(auth()->user()->name, 0, 2) }}
+                </div>
+            @endif
         </header>
 
         <div class="p-4 md:p-8 flex-1">
@@ -78,11 +91,7 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-            
-            // Toggle sidebar visibility
             sidebar.classList.toggle('-translate-x-full');
-            
-            // Toggle overlay visibility
             overlay.classList.toggle('hidden');
         }
     </script>

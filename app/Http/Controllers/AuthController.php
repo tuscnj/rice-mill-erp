@@ -25,7 +25,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/'); // Send to dashboard on success
+            return redirect()->intended('/'); 
         }
 
         return back()->withErrors([
@@ -42,17 +42,35 @@ class AuthController extends Controller
         return redirect('/login');
     }
 
-    // One-time setup to create your Master Admin account
+    // One-time setup to create accounts
     public function setupAdmin()
     {
         if (User::count() == 0) {
+            // 1. Master Admin Account
             User::create([
                 'name' => 'Tusar Ahmmed',
                 'email' => 'admin@atikrice.com',
-                'password' => Hash::make('password123') // You can change this later
+                'password' => Hash::make('password123'),
+                'role' => 'admin' // Full clearance
             ]);
-            return "Master Admin created! Go to /login to sign in.";
+
+            // 2. Standard Staff Account (For testing)
+            User::create([
+                'name' => 'Mill Staff',
+                'email' => 'staff@atikrice.com',
+                'password' => Hash::make('password123'),
+                'role' => 'data_entry' // Restricted clearance
+            ]);
+
+            return "Master Admin and Staff accounts created! Go to /login to sign in.";
         }
-        return "Admin account already exists!";
+        return "Accounts already exist!";
+    }
+
+    // Quick fix: Run this URL once to upgrade your existing account to Admin
+    public function upgradeMe()
+    {
+        User::where('email', 'admin@atikrice.com')->update(['role' => 'admin']);
+        return "Security Clearance Upgraded to Admin!";
     }
 }
