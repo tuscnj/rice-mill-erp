@@ -1,15 +1,22 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 
 // ==========================================
-// 1. PUBLIC ROUTES (Login System)
+// 1. PUBLIC ROUTES & MAGIC FIXES
 // ==========================================
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'show'])->name('login');
 Route::post('/run-login', [App\Http\Controllers\AuthController::class, 'authenticate']);
 Route::get('/setup-admin', [App\Http\Controllers\AuthController::class, 'setupAdmin']);
 Route::get('/upgrade-me', [App\Http\Controllers\AuthController::class, 'upgradeMe']);
+
+// 🚨 MAGIC FIX: Run this once to force the live database to add the 'role' column!
+Route::get('/force-migrate', function () {
+    Artisan::call('migrate', ['--force' => true]);
+    return "Live Database Successfully Migrated! The 'role' column has been added.";
+});
 
 // ==========================================
 // 2. SECURE VAULT (Requires Login)
