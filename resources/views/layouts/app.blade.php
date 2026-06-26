@@ -52,6 +52,11 @@
             @endif
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Account</div>
+
+<div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
+                <a href="/transactions" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-red-400">📖 Daybook (Edits)</a>
+                <a href="/users" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">👥 Staff & Permissions</a>
+
             <form action="/logout" method="POST" class="px-6 py-2.5">
                 @csrf
                 <button type="submit" class="w-full text-left text-gray-400 hover:text-white transition font-bold">

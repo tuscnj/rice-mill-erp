@@ -158,13 +158,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-balance-transfer/{id}', [App\Http\Controllers\BalanceTransferController::class, 'update']);
         Route::post('/update-stock-adjustment/{id}', [App\Http\Controllers\StockAdjustmentController::class, 'update']);
 
-        // Core System Settings (Accounts, Items, Units)
+        // Core System Settings (Accounts, Items, Units, Users)
         Route::get('/accounts', [App\Http\Controllers\AccountController::class, 'index']);
         Route::post('/run-account', [App\Http\Controllers\AccountController::class, 'store']);
         Route::get('/run-account', function () { return redirect('/accounts'); }); 
         Route::get('/edit-account/{id}', [App\Http\Controllers\AccountController::class, 'edit']);
         Route::post('/update-account/{id}', [App\Http\Controllers\AccountController::class, 'update']);
         Route::get('/delete-account/{id}', [App\Http\Controllers\AccountController::class, 'destroy']);
+        Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+        Route::post('/run-user', [App\Http\Controllers\UserController::class, 'store']);
+        Route::post('/update-user/{id}', [App\Http\Controllers\UserController::class, 'update']);
+        Route::get('/delete-user/{id}', [App\Http\Controllers\UserController::class, 'destroy']);
 
         Route::post('/items', [App\Http\Controllers\ItemController::class, 'store']); 
         Route::post('/run-item', [App\Http\Controllers\ItemController::class, 'store']); 
