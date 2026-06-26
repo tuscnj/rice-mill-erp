@@ -39,7 +39,6 @@
             <a href="/expense" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📉 Log Expense</a>
             <a href="/other-income" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💵 Log Other Income</a>
             
-            {{-- DAYBOOK IS NOW VISIBLE TO EVERYONE --}}
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
             <a href="/transactions" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-blue-400">📖 Daybook</a>
 
@@ -50,6 +49,9 @@
                 <a href="/accounts" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📒 Accounts & Ledgers</a>
                 <a href="/units" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚖️ Unit Settings</a>
                 <a href="/users" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">👥 Staff & Permissions</a>
+                
+                {{-- HERE IS YOUR NEW SETTINGS LINK --}}
+                <a href="/settings" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-amber-400">⚙️ Global Settings</a>
             @endif
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Account</div>
@@ -71,7 +73,6 @@
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800 truncate">@yield('title', 'Control Center')</h2>
             </div>
             
-            {{-- Dynamic User Badge --}}
             @if(auth()->check())
                 <div class="text-gray-500 text-xs sm:text-sm font-semibold hidden sm:block">
                     {{ auth()->user()->name }} 
