@@ -191,3 +191,5 @@ Route::get('/auto-deploy-cache-clear/{secret}', function($secret) {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     return 'Deployment Complete: All caches cleared successfully!';
 });
+Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index']);
+        Route::post('/update-settings', [App\Http\Controllers\SettingsController::class, 'update']);
