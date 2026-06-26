@@ -47,7 +47,9 @@
                         <th class="p-4 font-bold">Type</th>
                         <th class="p-4 font-bold">Reference</th>
                         <th class="p-4 font-bold">Narration</th>
-                        <th class="p-4 font-bold text-center">Action</th>
+                        @if(auth()->user()->role === 'admin')
+                            <th class="p-4 font-bold text-center">Action</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -80,6 +82,8 @@
                         </td>
                         <td class="p-4 text-gray-600 text-sm font-mono align-top">{{ $voucher->reference_number ?? 'N/A' }}</td>
                         <td class="p-4 text-gray-600 text-sm align-top max-w-xs truncate" title="{{ $voucher->notes }}">{{ $voucher->notes ?? '-' }}</td>
+                        
+                        @if(auth()->user()->role === 'admin')
                         <td class="p-4 text-center align-top">
                             <div class="flex justify-center gap-2">
                                 <a href="/edit-transaction/{{ $voucher->id }}" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-bold py-1.5 px-3 border border-blue-100 hover:border-blue-600 rounded-lg text-xs transition whitespace-nowrap">
@@ -93,11 +97,12 @@
                                 </form>
                             </div>
                         </td>
+                        @endif
                     </tr>
 
                     {{-- DETAILED SUB-ROW --}}
                     <tr class="bg-slate-50/50">
-                        <td colspan="5" class="p-0 border-b border-gray-200">
+                        <td colspan="{{ auth()->user()->role === 'admin' ? '5' : '4' }}" class="p-0 border-b border-gray-200">
                             <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
                                 
                                 {{-- FINANCIAL LEDGER BREAKDOWN --}}
@@ -264,6 +269,7 @@
                         </div>
                     @endif
 
+                    @if(auth()->user()->role === 'admin')
                     <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2">
                         <a href="/edit-transaction/{{ $voucher->id }}" class="w-1/2 text-center text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white transition py-3 rounded-xl font-bold border border-blue-100 text-sm">
                             Edit
@@ -275,6 +281,7 @@
                             </button>
                         </form>
                     </div>
+                    @endif
                 </div>
                 @endforeach
             </div>

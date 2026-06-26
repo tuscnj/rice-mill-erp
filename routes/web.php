@@ -12,7 +12,6 @@ Route::post('/run-login', [App\Http\Controllers\AuthController::class, 'authenti
 Route::get('/setup-admin', [App\Http\Controllers\AuthController::class, 'setupAdmin']);
 Route::get('/upgrade-me', [App\Http\Controllers\AuthController::class, 'upgradeMe']);
 
-// 🚨 MAGIC FIX: Run this once to force the live database to add the 'role' column!
 Route::get('/force-migrate', function () {
     Artisan::call('migrate', ['--force' => true]);
     return "Live Database Successfully Migrated! The 'role' column has been added.";
@@ -23,10 +22,13 @@ Route::get('/force-migrate', function () {
 // ==========================================
 Route::middleware('auth')->group(function () {
 
-    // --- LOGOUT & DASHBOARD ---
     Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
     Route::get('/stock', [App\Http\Controllers\ItemController::class, 'stock']);
+
+    // --- DAYBOOK VIEW (Open to all staff) ---
+    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+    Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
 
     // --- OPERATIONS: DATA ENTRY ---
     Route::get('/purchase', function () {
@@ -133,19 +135,11 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
 
-        // Reports & Daybook
+        // Master Reports
         Route::get('/report', [App\Http\Controllers\ReportController::class, 'index']);
-        Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
-        Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
-        Route::post('/delete-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'destroy']);
-        
-        // Ledger Deep Dives
-        Route::get('/ledger/{id}', [App\Http\Controllers\LedgerController::class, 'show']);
-        Route::get('/ledger/{id}/export', [App\Http\Controllers\LedgerController::class, 'export']);
-        Route::get('/item-ledger/{id}', [App\Http\Controllers\ItemLedgerController::class, 'show']);
-        Route::get('/item-ledger/{id}/export', [App\Http\Controllers\ItemLedgerController::class, 'export']);
 
-        // Editing Transactions
+        // Editing Transactions (Locked to Admins only)
+        Route::post('/delete-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'destroy']);
         Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']);
         Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);
         Route::post('/update-mill/{id}', [App\Http\Controllers\MillController::class, 'update']);
@@ -157,6 +151,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-other-income/{id}', [App\Http\Controllers\OtherIncomeController::class, 'update']);
         Route::post('/update-balance-transfer/{id}', [App\Http\Controllers\BalanceTransferController::class, 'update']);
         Route::post('/update-stock-adjustment/{id}', [App\Http\Controllers\StockAdjustmentController::class, 'update']);
+        
+        // Ledger Deep Dives
+        Route::get('/ledger/{id}', [App\Http\Controllers\LedgerController::class, 'show']);
+        Route::get('/ledger/{id}/export', [App\Http\Controllers\LedgerController::class, 'export']);
+        Route::get('/item-ledger/{id}', [App\Http\Controllers\ItemLedgerController::class, 'show']);
+        Route::get('/item-ledger/{id}/export', [App\Http\Controllers\ItemLedgerController::class, 'export']);
 
         // Core System Settings (Accounts, Items, Units, Users)
         Route::get('/accounts', [App\Http\Controllers\AccountController::class, 'index']);
@@ -183,31 +183,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/edit-unit/{id}', [App\Http\Controllers\UnitController::class, 'edit']);
         Route::post('/update-unit/{id}', [App\Http\Controllers\UnitController::class, 'update']);
         Route::get('/delete-unit/{id}', [App\Http\Controllers\UnitController::class, 'destroy']);
-
-        // Setup Macros
-        Route::get('/setup-accounts', function () {
-            App\Models\Account::firstOrCreate(['name' => 'Purchase Account'], ['group_type' => 'Direct Expenses', 'balance' => 0]);
-            App\Models\Account::firstOrCreate(['name' => 'Rahman Traders (Supplier)'], ['group_type' => 'Sundry Creditors', 'balance' => 0]);
-            App\Models\Account::firstOrCreate(['name' => 'Karim Farmers (Supplier)'], ['group_type' => 'Sundry Creditors', 'balance' => 0]);
-            return "Accounts setup complete!";
-        });
-        Route::get('/setup-customers', function () {
-            App\Models\Account::firstOrCreate(['name' => 'Sales Account'], ['group_type' => 'Direct Incomes', 'balance' => 0]);
-            App\Models\Account::firstOrCreate(['name' => 'Mahi Groceries (Customer)'], ['group_type' => 'Sundry Debtors', 'balance' => 0]);
-            return "Customers setup complete!";
-        });
-        Route::get('/setup-expenses', function () {
-            App\Models\Account::firstOrCreate(['name' => 'Worker Wages'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
-            App\Models\Account::firstOrCreate(['name' => 'Electricity Bill'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
-            App\Models\Account::firstOrCreate(['name' => 'Mill Maintenance'], ['group_type' => 'Indirect Expenses', 'balance' => 0]);
-            return "Expense accounts created!";
-        });
     });
 });
 
-// ==========================================
-// 4. AUTOMATED DEPLOYMENT WEBHOOK
-// ==========================================
 Route::get('/auto-deploy-cache-clear/{secret}', function($secret) {
     if ($secret !== 'AtikAutoDeploy2026!') return 'Unauthorized';
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');

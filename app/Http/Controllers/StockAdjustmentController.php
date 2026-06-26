@@ -9,7 +9,14 @@ use Illuminate\Support\Facades\DB;
 
 class StockAdjustmentController extends Controller
 {
-    // 1. Loads the main Stock Adjustment form
+
+public function index()
+    {
+        $items = \App\Models\Item::orderBy('name')->get();
+        return view('stock-adjustment', ['items' => $items]);
+    }
+
+// 1. Loads the main Stock Adjustment form
     public function index()
     {
         $items = Item::orderBy('name')->get();
