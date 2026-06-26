@@ -9,19 +9,19 @@ use Illuminate\Support\Facades\DB;
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'show'])->name('login');
 Route::post('/run-login', [App\Http\Controllers\AuthController::class, 'authenticate']);
 Route::get('/setup-admin', [App\Http\Controllers\AuthController::class, 'setupAdmin']);
-Route::get('/upgrade-me', [App\Http\Controllers\AuthController::class, 'upgradeMe']); // Run this once!
+Route::get('/upgrade-me', [App\Http\Controllers\AuthController::class, 'upgradeMe']);
 
 // ==========================================
 // 2. SECURE VAULT (Requires Login)
 // ==========================================
 Route::middleware('auth')->group(function () {
 
-    // --- LOGOUT & DASHBOARD (Everyone can access) ---
+    // --- LOGOUT & DASHBOARD ---
     Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
     Route::get('/stock', [App\Http\Controllers\ItemController::class, 'stock']);
 
-    // --- OPERATIONS: DATA ENTRY (Everyone can access) ---
+    // --- OPERATIONS: DATA ENTRY ---
     Route::get('/purchase', function () {
         $suppliers = App\Models\Account::where('group_type', 'Sundry Creditors')->get();
         $customers = App\Models\Account::where('group_type', 'Sundry Debtors')->get();
@@ -121,7 +121,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/run-other-income', [App\Http\Controllers\OtherIncomeController::class, 'store']);
     Route::get('/run-other-income', function () { return redirect('/other-income'); }); 
 
-// ==========================================
+    // ==========================================
     // 3. ADMIN ZONE (STRICT CLEARANCE ONLY)
     // ==========================================
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
