@@ -10,13 +10,18 @@ use Illuminate\Support\Facades\Response;
 
 class LedgerController extends Controller
 {
-    public function show($id, Request $request)
+public function show($id, Request $request)
     {
         $account = Account::findOrFail($id);
         $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
         $endDate = $request->query('end_date', now()->toDateString());
+        
+        // 1. Check if the user wants the Simple or Detailed view
+        $isDetailed = $request->has('detailed');
 
-        // Eager load vouchers, their opposite entries (for particulars), and inventory items!
+        // 2. Fetch Global Company Settings
+        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
+
         $entries = VoucherEntry::where('account_id', $id)
                     ->whereHas('voucher', function ($query) use ($startDate, $endDate) {
                         $query->whereDate('voucher_date', '>=', $startDate)
@@ -26,13 +31,11 @@ class LedgerController extends Controller
                     ->orderBy('created_at', 'asc')
                     ->get();
 
-        // Calculate algebraic opening balance (Debit = Positive, Credit = Negative)
         $openingBalanceRaw = 0;
         $openingEntries = VoucherEntry::where('account_id', $id)
             ->whereHas('voucher', function($query) use ($startDate) {
                 $query->whereDate('voucher_date', '<', $startDate);
-            })
-            ->get();
+            })->get();
 
         foreach ($openingEntries as $entry) {
             $openingBalanceRaw += ($entry->entry_type == 'Debit' ? $entry->amount : -$entry->amount);
@@ -43,8 +46,6 @@ class LedgerController extends Controller
 
         foreach ($entries as $entry) {
             $runningBalance += ($entry->entry_type == 'Debit' ? $entry->amount : -$entry->amount);
-            
-            // Find the "Particulars" (the opposing accounts in this voucher)
             $particulars = $entry->voucher->entries->where('account_id', '!=', $account->id);
 
             $ledgerEntries[] = [
@@ -62,6 +63,8 @@ class LedgerController extends Controller
             'endDate' => $endDate,
             'openingBalanceRaw' => $openingBalanceRaw,
             'closingBalanceRaw' => $runningBalance,
+            'setting' => $setting,         // Pass Settings to View
+            'isDetailed' => $isDetailed,   // Pass Toggle State to View
         ]);
     }
 
