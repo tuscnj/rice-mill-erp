@@ -121,15 +121,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/run-other-income', [App\Http\Controllers\OtherIncomeController::class, 'store']);
     Route::get('/run-other-income', function () { return redirect('/other-income'); }); 
 
-    // ==========================================
+// ==========================================
     // 3. ADMIN ZONE (STRICT CLEARANCE ONLY)
     // ==========================================
-    Route::middleware(function ($request, $next) {
-        if (auth()->user()->role !== 'admin') {
-            return redirect('/')->with('error', 'Access Denied: Administrator clearance required.');
-        }
-        return $next($request);
-    })->group(function () {
+    Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
 
         // Reports & Daybook
         Route::get('/report', [App\Http\Controllers\ReportController::class, 'index']);
