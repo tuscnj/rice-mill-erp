@@ -41,7 +41,7 @@
                     CSV
                 </a>
 
-                {{-- PRINT BUTTON (Restored for PC, hidden on tiny mobile screens) --}}
+                {{-- PRINT BUTTON (Hidden on mobile) --}}
                 <button onclick="window.print()" class="hidden sm:flex bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition items-center gap-2 text-sm h-full">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Print
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    {{-- PRINT LETTERHEAD (Hidden on web, visible on print) --}}
+    {{-- PRINT LETTERHEAD --}}
     <div class="hidden print:block mb-8">
         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6">
             <div class="flex items-center gap-4">
@@ -82,104 +82,106 @@
         </div>
     </div>
 
-    {{-- LEDGER TABLE --}}
-    <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mt-6 print:shadow-none print:border-none print:rounded-none">
-        <table class="w-full text-left border-collapse text-sm print:text-xs">
-            <thead>
-                <tr class="bg-slate-800 text-white print:bg-slate-100 print:text-slate-900 border-b-2 border-slate-800">
-                    <th class="p-3 print:py-2 print:px-1 font-bold w-24">Date</th>
-                    <th class="p-3 print:py-2 print:px-1 font-bold">Particulars</th>
-                    <th class="p-3 print:py-2 print:px-1 font-bold w-20">Vch Type</th>
-                    <th class="p-3 print:py-2 print:px-1 font-bold text-right text-emerald-400 print:text-slate-900">Debit (Dr)</th>
-                    <th class="p-3 print:py-2 print:px-1 font-bold text-right text-rose-400 print:text-slate-900">Credit (Cr)</th>
-                    <th class="p-3 print:py-2 print:px-1 font-bold text-right bg-slate-900 print:bg-slate-200">Balance</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 print:divide-gray-300">
-                
-                {{-- OPENING BALANCE --}}
-                <tr class="bg-amber-50 font-bold text-gray-800 print:bg-transparent">
-                    <td class="p-3 print:py-2 print:px-1 text-center uppercase tracking-widest text-xs" colspan="3">Opening Balance</td>
-                    <td class="p-3 print:py-2 print:px-1 text-right">-</td>
-                    <td class="p-3 print:py-2 print:px-1 text-right">-</td>
-                    <td class="p-3 print:py-2 print:px-1 text-right bg-amber-100 print:bg-transparent">
-                        {{ number_format(abs($openingBalanceRaw), 2) }} 
-                        <span class="text-[10px] text-gray-500 ml-0.5">{{ $openingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
-                    </td>
-                </tr>
+    {{-- LEDGER TABLE WITH HORIZONTAL SCROLL FOR MOBILE --}}
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mt-6 print:shadow-none print:border-none print:rounded-none">
+        <div class="overflow-x-auto rounded-xl">
+            <table class="w-full text-left border-collapse text-sm print:text-xs min-w-[800px] print:min-w-full">
+                <thead>
+                    <tr class="bg-slate-800 text-white print:bg-slate-100 print:text-slate-900 border-b-2 border-slate-800">
+                        <th class="p-3 print:py-2 print:px-1 font-bold w-24">Date</th>
+                        <th class="p-3 print:py-2 print:px-1 font-bold">Particulars</th>
+                        <th class="p-3 print:py-2 print:px-1 font-bold w-20">Vch Type</th>
+                        <th class="p-3 print:py-2 print:px-1 font-bold text-right text-emerald-400 print:text-slate-900">Debit (Dr)</th>
+                        <th class="p-3 print:py-2 print:px-1 font-bold text-right text-rose-400 print:text-slate-900">Credit (Cr)</th>
+                        <th class="p-3 print:py-2 print:px-1 font-bold text-right bg-slate-900 print:bg-slate-200">Balance</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 print:divide-gray-300">
+                    
+                    {{-- OPENING BALANCE --}}
+                    <tr class="bg-amber-50 font-bold text-gray-800 print:bg-transparent">
+                        <td class="p-3 print:py-2 print:px-1 text-center uppercase tracking-widest text-xs" colspan="3">Opening Balance</td>
+                        <td class="p-3 print:py-2 print:px-1 text-right">-</td>
+                        <td class="p-3 print:py-2 print:px-1 text-right">-</td>
+                        <td class="p-3 print:py-2 print:px-1 text-right bg-amber-100 print:bg-transparent">
+                            {{ number_format(abs($openingBalanceRaw), 2) }} 
+                            <span class="text-[10px] text-gray-500 ml-0.5">{{ $openingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                        </td>
+                    </tr>
 
-                {{-- TRANSACTIONS --}}
-                @forelse($entries as $row)
-                @php $entry = $row['entry']; @endphp
-                <tr class="hover:bg-slate-50 transition align-top print:break-inside-avoid">
-                    <td class="p-3 print:py-2 print:px-1 whitespace-nowrap text-xs font-semibold text-gray-700">
-                        {{ \Carbon\Carbon::parse($entry->voucher->voucher_date)->format('d-M-y') }}
-                    </td>
-                    <td class="p-3 print:py-2 print:px-1">
-                        <div class="font-bold text-blue-700 print:text-slate-900 text-sm print:text-xs">
-                            @if($row['particulars']->count() > 0)
-                                By {{ $row['particulars']->pluck('account.name')->implode(', ') }}
-                            @else
-                                Self / System Adjustment
-                            @endif
-                        </div>
-                        
-                        @if($isDetailed)
-                            @if($entry->voucher->reference_number || $entry->voucher->notes)
-                            <div class="text-[11px] text-gray-500 mt-1 italic leading-tight">
-                                {{ $entry->voucher->reference_number ? 'Ref: '.$entry->voucher->reference_number.' | ' : '' }}
-                                {{ $entry->voucher->notes ?? '' }}
+                    {{-- TRANSACTIONS --}}
+                    @forelse($entries as $row)
+                    @php $entry = $row['entry']; @endphp
+                    <tr class="hover:bg-slate-50 transition align-top print:break-inside-avoid">
+                        <td class="p-3 print:py-2 print:px-1 whitespace-nowrap text-xs font-semibold text-gray-700">
+                            {{ \Carbon\Carbon::parse($entry->voucher->voucher_date)->format('d-M-y') }}
+                        </td>
+                        <td class="p-3 print:py-2 print:px-1">
+                            <div class="font-bold text-blue-700 print:text-slate-900 text-sm print:text-xs">
+                                @if($row['particulars']->count() > 0)
+                                    By {{ $row['particulars']->pluck('account.name')->implode(', ') }}
+                                @else
+                                    Self / System Adjustment
+                                @endif
                             </div>
-                            @endif
-
-                            @if($row['inventory']->count() > 0)
-                                <div class="mt-2 bg-slate-50 print:bg-transparent rounded border border-slate-100 print:border-slate-300 p-2 print:p-1">
-                                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Inventory Included:</p>
-                                    @foreach($row['inventory'] as $inv)
-                                        <div class="text-[10px] text-gray-700 flex justify-between">
-                                            <span>• {{ $inv->item->name }}</span>
-                                            <span class="font-mono text-gray-500">{{ number_format($inv->quantity, 2) }} {{ $inv->item->unit ?? 'KG' }} @ {{ number_format($inv->rate, 2) }}</span>
-                                        </div>
-                                    @endforeach
+                            
+                            @if($isDetailed)
+                                @if($entry->voucher->reference_number || $entry->voucher->notes)
+                                <div class="text-[11px] text-gray-500 mt-1 italic leading-tight">
+                                    {{ $entry->voucher->reference_number ? 'Ref: '.$entry->voucher->reference_number.' | ' : '' }}
+                                    {{ $entry->voucher->notes ?? '' }}
                                 </div>
-                            @endif
-                        @endif
-                    </td>
-                    <td class="p-3 print:py-2 print:px-1 text-xs text-gray-600 font-mono">
-                        {{ $entry->voucher->voucher_type }}<br>
-                        <span class="text-[9px] text-gray-400">#VCH-{{ $entry->voucher->id }}</span>
-                    </td>
-                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-emerald-600 print:text-slate-800">
-                        {{ $entry->entry_type == 'Debit' ? number_format($entry->amount, 2) : '' }}
-                    </td>
-                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-rose-600 print:text-slate-800">
-                        {{ $entry->entry_type == 'Credit' ? number_format($entry->amount, 2) : '' }}
-                    </td>
-                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-gray-900 bg-slate-50 print:bg-transparent">
-                        {{ number_format(abs($row['running_balance']), 2) }}
-                        <span class="text-[10px] text-gray-500 ml-0.5">{{ $row['running_balance'] >= 0 ? 'Dr' : 'Cr' }}</span>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="p-8 text-center text-gray-400 italic">No transactions found for this period.</td>
-                </tr>
-                @endforelse
+                                @endif
 
-                {{-- CLOSING BALANCE --}}
-                <tr class="bg-slate-800 text-white font-bold print:bg-slate-100 print:text-slate-900 border-t-2 border-slate-800">
-                    <td class="p-4 print:py-3 print:px-1 text-center tracking-widest uppercase text-xs sm:text-sm" colspan="3">Closing Balance</td>
-                    <td class="p-4 print:py-3 print:px-1 text-right"></td>
-                    <td class="p-4 print:py-3 print:px-1 text-right"></td>
-                    <td class="p-4 print:py-3 print:px-1 text-right text-base sm:text-lg">
-                        ৳ {{ number_format(abs($closingBalanceRaw), 2) }} 
-                        <span class="text-xs text-gray-400 ml-1 print:text-slate-600">{{ $closingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                                @if($row['inventory']->count() > 0)
+                                    <div class="mt-2 bg-slate-50 print:bg-transparent rounded border border-slate-100 print:border-slate-300 p-2 print:p-1">
+                                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Inventory Included:</p>
+                                        @foreach($row['inventory'] as $inv)
+                                            <div class="text-[10px] text-gray-700 flex justify-between">
+                                                <span>• {{ $inv->item->name }}</span>
+                                                <span class="font-mono text-gray-500">{{ number_format($inv->quantity, 2) }} {{ $inv->item->unit ?? 'KG' }} @ {{ number_format($inv->rate, 2) }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endif
+                        </td>
+                        <td class="p-3 print:py-2 print:px-1 text-xs text-gray-600 font-mono">
+                            {{ $entry->voucher->voucher_type }}<br>
+                            <span class="text-[9px] text-gray-400">#VCH-{{ $entry->voucher->id }}</span>
+                        </td>
+                        <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-emerald-600 print:text-slate-800">
+                            {{ $entry->entry_type == 'Debit' ? number_format($entry->amount, 2) : '' }}
+                        </td>
+                        <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-rose-600 print:text-slate-800">
+                            {{ $entry->entry_type == 'Credit' ? number_format($entry->amount, 2) : '' }}
+                        </td>
+                        <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-gray-900 bg-slate-50 print:bg-transparent">
+                            {{ number_format(abs($row['running_balance']), 2) }}
+                            <span class="text-[10px] text-gray-500 ml-0.5">{{ $row['running_balance'] >= 0 ? 'Dr' : 'Cr' }}</span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-gray-400 italic">No transactions found for this period.</td>
+                    </tr>
+                    @endforelse
+
+                    {{-- CLOSING BALANCE --}}
+                    <tr class="bg-slate-800 text-white font-bold print:bg-slate-100 print:text-slate-900 border-t-2 border-slate-800">
+                        <td class="p-4 print:py-3 print:px-1 text-center tracking-widest uppercase text-xs sm:text-sm" colspan="3">Closing Balance</td>
+                        <td class="p-4 print:py-3 print:px-1 text-right"></td>
+                        <td class="p-4 print:py-3 print:px-1 text-right"></td>
+                        <td class="p-4 print:py-3 print:px-1 text-right text-base sm:text-lg">
+                            ৳ {{ number_format(abs($closingBalanceRaw), 2) }} 
+                            <span class="text-xs text-gray-400 ml-1 print:text-slate-600">{{ $closingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         
-        {{-- PRINT SIGNATURES (Hidden on web, visible on print) --}}
+        {{-- PRINT SIGNATURES --}}
         <div class="hidden print:flex justify-between items-end mt-16 pt-8 px-4">
             <div class="text-center w-48 border-t border-slate-400 pt-2">
                 <p class="text-xs font-bold text-slate-800">Prepared By</p>
@@ -192,7 +194,6 @@
     </div>
 </div>
 
-{{-- STRICT PRINT CSS FOR NATIVE BROWSER PRINTING --}}
 <style>
     @media print {
         @page { size: A4 portrait; margin: 12mm; }
