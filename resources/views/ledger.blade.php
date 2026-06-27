@@ -2,7 +2,18 @@
 @section('title', 'Statement of Account')
 @section('content')
 
-<div class="max-w-6xl mx-auto space-y-6 pb-12 font-sans">
+@php
+    // Securely convert image to Base64 so the Print Preview never drops the logo
+    $logoData = '';
+    if($setting->logo_path && file_exists(public_path($setting->logo_path))) {
+        $type = pathinfo(public_path($setting->logo_path), PATHINFO_EXTENSION);
+        $data = file_get_contents(public_path($setting->logo_path));
+        $logoData = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
+@endphp
+
+{{-- 🚨 ADDED print:max-w-full and print:mx-0 to break out of the website margins --}}
+<div class="max-w-6xl mx-auto space-y-6 pb-12 font-sans print:max-w-full print:w-full print:mx-0 print:p-0">
     
     {{-- WEB INTERFACE --}}
     <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 print:hidden">
@@ -41,7 +52,7 @@
                     CSV
                 </a>
 
-                {{-- PRINT BUTTON (Hidden on mobile) --}}
+                {{-- PRINT BUTTON --}}
                 <button onclick="window.print()" class="hidden sm:flex bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition items-center gap-2 text-sm h-full">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Print
@@ -60,8 +71,8 @@
     <div class="hidden print:block mb-8">
         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6">
             <div class="flex items-center gap-4">
-                @if($setting->logo_path)
-                    <img src="{{ asset('/' . $setting->logo_path) }}" alt="Logo" class="h-16 w-auto object-contain">
+                @if($logoData)
+                    <img src="{{ $logoData }}" alt="Logo" class="h-16 w-auto object-contain">
                 @endif
                 <div>
                     <h1 class="text-3xl font-black text-slate-900 tracking-tight">{{ $setting->company_name }}</h1>
@@ -82,9 +93,10 @@
         </div>
     </div>
 
-    {{-- LEDGER TABLE WITH HORIZONTAL SCROLL FOR MOBILE --}}
-    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mt-6 print:shadow-none print:border-none print:rounded-none">
-        <div class="overflow-x-auto rounded-xl">
+    {{-- LEDGER TABLE --}}
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mt-6 print:shadow-none print:border-none print:rounded-none print:mt-0">
+        {{-- 🚨 ADDED print:overflow-visible to prevent horizontal scrolling cutoff on paper --}}
+        <div class="overflow-x-auto rounded-xl print:overflow-visible">
             <table class="w-full text-left border-collapse text-sm print:text-xs min-w-[800px] print:min-w-full">
                 <thead>
                     <tr class="bg-slate-800 text-white print:bg-slate-100 print:text-slate-900 border-b-2 border-slate-800">
@@ -196,8 +208,13 @@
 
 <style>
     @media print {
-        @page { size: A4 portrait; margin: 12mm; }
-        body { background-color: white !important; font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        @page { size: A4 portrait; margin: 10mm; }
+        body { background-color: white !important; font-size: 11pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .print\:max-w-full { max-width: 100% !important; }
+        .print\:w-full { width: 100% !important; }
+        .print\:mx-0 { margin-left: 0 !important; margin-right: 0 !important; }
+        .print\:p-0 { padding: 0 !important; }
+        .print\:overflow-visible { overflow: visible !important; }
         .print\:hidden { display: none !important; }
         .print\:block { display: block !important; }
         .print\:flex { display: flex !important; }
