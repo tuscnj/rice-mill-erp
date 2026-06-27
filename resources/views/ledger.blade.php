@@ -40,6 +40,12 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     CSV
                 </a>
+
+                {{-- PRINT BUTTON (Restored for PC, hidden on tiny mobile screens) --}}
+                <button onclick="window.print()" class="hidden sm:flex bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition items-center gap-2 text-sm h-full">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print
+                </button>
                 
                 {{-- PDF BUTTON --}}
                 <a href="/ledger/{{ $account->id }}/pdf?start_date={{ $startDate }}&end_date={{ $endDate }}&detailed={{ $isDetailed ? '1' : '' }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2 text-sm h-full">
@@ -50,27 +56,53 @@
         </div>
     </div>
 
+    {{-- PRINT LETTERHEAD (Hidden on web, visible on print) --}}
+    <div class="hidden print:block mb-8">
+        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6">
+            <div class="flex items-center gap-4">
+                @if($setting->logo_path)
+                    <img src="{{ asset('/' . $setting->logo_path) }}" alt="Logo" class="h-16 w-auto object-contain">
+                @endif
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">{{ $setting->company_name }}</h1>
+                    @if($setting->address) <p class="text-sm text-slate-600 mt-1">{{ $setting->address }}</p> @endif
+                    <p class="text-sm text-slate-600">
+                        @if($setting->phone) Phone: {{ $setting->phone }} @endif 
+                        @if($setting->phone && $setting->email) | @endif 
+                        @if($setting->email) Email: {{ $setting->email }} @endif
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-widest">Statement</h2>
+                <p class="text-slate-600 font-bold mt-1 text-lg">{{ $account->name }}</p>
+                <p class="text-sm text-slate-500 mt-1">Period: {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}</p>
+                <p class="text-xs text-slate-400 mt-1">Generated: {{ now()->format('d M Y, h:i A') }}</p>
+            </div>
+        </div>
+    </div>
+
     {{-- LEDGER TABLE --}}
-    <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mt-6">
-        <table class="w-full text-left border-collapse text-sm">
+    <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mt-6 print:shadow-none print:border-none print:rounded-none">
+        <table class="w-full text-left border-collapse text-sm print:text-xs">
             <thead>
-                <tr class="bg-slate-800 text-white border-b-2 border-slate-800">
-                    <th class="p-3 font-bold w-24">Date</th>
-                    <th class="p-3 font-bold">Particulars</th>
-                    <th class="p-3 font-bold w-20">Vch Type</th>
-                    <th class="p-3 font-bold text-right text-emerald-400">Debit (Dr)</th>
-                    <th class="p-3 font-bold text-right text-rose-400">Credit (Cr)</th>
-                    <th class="p-3 font-bold text-right bg-slate-900">Balance</th>
+                <tr class="bg-slate-800 text-white print:bg-slate-100 print:text-slate-900 border-b-2 border-slate-800">
+                    <th class="p-3 print:py-2 print:px-1 font-bold w-24">Date</th>
+                    <th class="p-3 print:py-2 print:px-1 font-bold">Particulars</th>
+                    <th class="p-3 print:py-2 print:px-1 font-bold w-20">Vch Type</th>
+                    <th class="p-3 print:py-2 print:px-1 font-bold text-right text-emerald-400 print:text-slate-900">Debit (Dr)</th>
+                    <th class="p-3 print:py-2 print:px-1 font-bold text-right text-rose-400 print:text-slate-900">Credit (Cr)</th>
+                    <th class="p-3 print:py-2 print:px-1 font-bold text-right bg-slate-900 print:bg-slate-200">Balance</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-200 print:divide-gray-300">
                 
                 {{-- OPENING BALANCE --}}
-                <tr class="bg-amber-50 font-bold text-gray-800">
-                    <td class="p-3 text-center uppercase tracking-widest text-xs" colspan="3">Opening Balance</td>
-                    <td class="p-3 text-right">-</td>
-                    <td class="p-3 text-right">-</td>
-                    <td class="p-3 text-right bg-amber-100">
+                <tr class="bg-amber-50 font-bold text-gray-800 print:bg-transparent">
+                    <td class="p-3 print:py-2 print:px-1 text-center uppercase tracking-widest text-xs" colspan="3">Opening Balance</td>
+                    <td class="p-3 print:py-2 print:px-1 text-right">-</td>
+                    <td class="p-3 print:py-2 print:px-1 text-right">-</td>
+                    <td class="p-3 print:py-2 print:px-1 text-right bg-amber-100 print:bg-transparent">
                         {{ number_format(abs($openingBalanceRaw), 2) }} 
                         <span class="text-[10px] text-gray-500 ml-0.5">{{ $openingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
                     </td>
@@ -79,12 +111,12 @@
                 {{-- TRANSACTIONS --}}
                 @forelse($entries as $row)
                 @php $entry = $row['entry']; @endphp
-                <tr class="hover:bg-slate-50 transition align-top">
-                    <td class="p-3 whitespace-nowrap text-xs font-semibold text-gray-700">
+                <tr class="hover:bg-slate-50 transition align-top print:break-inside-avoid">
+                    <td class="p-3 print:py-2 print:px-1 whitespace-nowrap text-xs font-semibold text-gray-700">
                         {{ \Carbon\Carbon::parse($entry->voucher->voucher_date)->format('d-M-y') }}
                     </td>
-                    <td class="p-3">
-                        <div class="font-bold text-blue-700 text-sm">
+                    <td class="p-3 print:py-2 print:px-1">
+                        <div class="font-bold text-blue-700 print:text-slate-900 text-sm print:text-xs">
                             @if($row['particulars']->count() > 0)
                                 By {{ $row['particulars']->pluck('account.name')->implode(', ') }}
                             @else
@@ -101,7 +133,7 @@
                             @endif
 
                             @if($row['inventory']->count() > 0)
-                                <div class="mt-2 bg-slate-50 rounded border border-slate-100 p-2">
+                                <div class="mt-2 bg-slate-50 print:bg-transparent rounded border border-slate-100 print:border-slate-300 p-2 print:p-1">
                                     <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Inventory Included:</p>
                                     @foreach($row['inventory'] as $inv)
                                         <div class="text-[10px] text-gray-700 flex justify-between">
@@ -113,17 +145,17 @@
                             @endif
                         @endif
                     </td>
-                    <td class="p-3 text-xs text-gray-600 font-mono">
+                    <td class="p-3 print:py-2 print:px-1 text-xs text-gray-600 font-mono">
                         {{ $entry->voucher->voucher_type }}<br>
                         <span class="text-[9px] text-gray-400">#VCH-{{ $entry->voucher->id }}</span>
                     </td>
-                    <td class="p-3 text-right font-mono font-bold text-emerald-600">
+                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-emerald-600 print:text-slate-800">
                         {{ $entry->entry_type == 'Debit' ? number_format($entry->amount, 2) : '' }}
                     </td>
-                    <td class="p-3 text-right font-mono font-bold text-rose-600">
+                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-rose-600 print:text-slate-800">
                         {{ $entry->entry_type == 'Credit' ? number_format($entry->amount, 2) : '' }}
                     </td>
-                    <td class="p-3 text-right font-mono font-bold text-gray-900 bg-slate-50">
+                    <td class="p-3 print:py-2 print:px-1 text-right font-mono font-bold text-gray-900 bg-slate-50 print:bg-transparent">
                         {{ number_format(abs($row['running_balance']), 2) }}
                         <span class="text-[10px] text-gray-500 ml-0.5">{{ $row['running_balance'] >= 0 ? 'Dr' : 'Cr' }}</span>
                     </td>
@@ -135,17 +167,50 @@
                 @endforelse
 
                 {{-- CLOSING BALANCE --}}
-                <tr class="bg-slate-800 text-white font-bold border-t-2 border-slate-800">
-                    <td class="p-4 text-center tracking-widest uppercase text-xs sm:text-sm" colspan="3">Closing Balance</td>
-                    <td class="p-4 text-right"></td>
-                    <td class="p-4 text-right"></td>
-                    <td class="p-4 text-right text-base sm:text-lg">
+                <tr class="bg-slate-800 text-white font-bold print:bg-slate-100 print:text-slate-900 border-t-2 border-slate-800">
+                    <td class="p-4 print:py-3 print:px-1 text-center tracking-widest uppercase text-xs sm:text-sm" colspan="3">Closing Balance</td>
+                    <td class="p-4 print:py-3 print:px-1 text-right"></td>
+                    <td class="p-4 print:py-3 print:px-1 text-right"></td>
+                    <td class="p-4 print:py-3 print:px-1 text-right text-base sm:text-lg">
                         ৳ {{ number_format(abs($closingBalanceRaw), 2) }} 
-                        <span class="text-xs text-gray-400 ml-1">{{ $closingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                        <span class="text-xs text-gray-400 ml-1 print:text-slate-600">{{ $closingBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
                     </td>
                 </tr>
             </tbody>
         </table>
+        
+        {{-- PRINT SIGNATURES (Hidden on web, visible on print) --}}
+        <div class="hidden print:flex justify-between items-end mt-16 pt-8 px-4">
+            <div class="text-center w-48 border-t border-slate-400 pt-2">
+                <p class="text-xs font-bold text-slate-800">Prepared By</p>
+            </div>
+            <div class="text-center w-48 border-t border-slate-400 pt-2">
+                <p class="text-xs font-bold text-slate-800">Authorized Signature</p>
+                <p class="text-[10px] text-slate-500">{{ $setting->company_name }}</p>
+            </div>
+        </div>
     </div>
 </div>
+
+{{-- STRICT PRINT CSS FOR NATIVE BROWSER PRINTING --}}
+<style>
+    @media print {
+        @page { size: A4 portrait; margin: 12mm; }
+        body { background-color: white !important; font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .print\:hidden { display: none !important; }
+        .print\:block { display: block !important; }
+        .print\:flex { display: flex !important; }
+        .print\:shadow-none { box-shadow: none !important; }
+        .print\:border-none { border: none !important; }
+        .print\:bg-transparent { background-color: transparent !important; }
+        .print\:bg-slate-100 { background-color: #f1f5f9 !important; }
+        .print\:bg-slate-200 { background-color: #e2e8f0 !important; }
+        .print\:text-slate-900 { color: #0f172a !important; }
+        .print\:text-slate-800 { color: #1e293b !important; }
+        table { width: 100%; border-collapse: collapse; }
+        th { border-bottom: 2px solid #1e293b !important; }
+        td { border-bottom: 1px solid #cbd5e1 !important; }
+        .print\:break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+    }
+</style>
 @endsection
