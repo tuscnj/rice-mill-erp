@@ -7,19 +7,34 @@ use App\Models\Account;
 use App\Models\VoucherEntry;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
+use Barryvdh\DomPDF\Facade\Pdf; // 🚨 Added DOMPDF Facade
 
 class LedgerController extends Controller
 {
-public function show($id, Request $request)
+    public function show($id, Request $request)
+    {
+        $data = $this->getLedgerData($id, $request);
+        return view('ledger', $data);
+    }
+
+    // 🚨 NEW METHOD: Triggers the PDF Download
+    public function downloadPdf($id, Request $request)
+    {
+        $data = $this->getLedgerData($id, $request);
+        
+        $pdf = Pdf::loadView('ledger-pdf', $data);
+        
+        $fileName = strtolower(str_replace(' ', '-', $data['account']->name)) . '-statement.pdf';
+        return $pdf->download($fileName);
+    }
+
+    // Reusable core logic so we don't duplicate code
+    private function getLedgerData($id, Request $request)
     {
         $account = Account::findOrFail($id);
         $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
         $endDate = $request->query('end_date', now()->toDateString());
-        
-        // 1. Check if the user wants the Simple or Detailed view
         $isDetailed = $request->has('detailed');
-
-        // 2. Fetch Global Company Settings
         $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
 
         $entries = VoucherEntry::where('account_id', $id)
@@ -56,65 +71,44 @@ public function show($id, Request $request)
             ];
         }
 
-        return view('ledger', [
+        return [
             'account' => $account,
             'entries' => $ledgerEntries,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'openingBalanceRaw' => $openingBalanceRaw,
             'closingBalanceRaw' => $runningBalance,
-            'setting' => $setting,         // Pass Settings to View
-            'isDetailed' => $isDetailed,   // Pass Toggle State to View
-        ]);
+            'setting' => $setting,
+            'isDetailed' => $isDetailed,
+        ];
     }
 
     public function export($id, Request $request)
     {
-        $account = Account::findOrFail($id);
-        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->query('end_date', now()->toDateString());
-
-        $entries = VoucherEntry::where('account_id', $id)
-            ->whereHas('voucher', function ($query) use ($startDate, $endDate) {
-                $query->whereDate('voucher_date', '>=', $startDate)
-                      ->whereDate('voucher_date', '<=', $endDate);
-            })
-            ->with(['voucher.entries.account'])
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $openingBalanceRaw = 0;
-        $openingEntries = VoucherEntry::where('account_id', $id)
-            ->whereHas('voucher', function($query) use ($startDate) {
-                $query->whereDate('voucher_date', '<', $startDate);
-            })->get();
-
-        foreach ($openingEntries as $entry) {
-            $openingBalanceRaw += ($entry->entry_type == 'Debit' ? $entry->amount : -$entry->amount);
-        }
-
-        $runningBalance = $openingBalanceRaw;
-        $fileName = strtolower(str_replace(' ', '-', $account->name)) . '-ledger.csv';
+        $data = $this->getLedgerData($id, $request);
+        $fileName = strtolower(str_replace(' ', '-', $data['account']->name)) . '-ledger.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ];
 
-        $callback = function () use ($account, $startDate, $endDate, $entries, $openingBalanceRaw, &$runningBalance) {
+        $callback = function () use ($data) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Account Ledger', $account->name]);
-            fputcsv($handle, ['From Date', $startDate, 'To Date', $endDate]);
+            fputcsv($handle, ['Account Ledger', $data['account']->name]);
+            fputcsv($handle, ['From Date', $data['startDate'], 'To Date', $data['endDate']]);
             
-            $opType = $openingBalanceRaw >= 0 ? 'Dr' : 'Cr';
-            fputcsv($handle, ['Opening Balance', abs($openingBalanceRaw) . ' ' . $opType]);
+            $opType = $data['openingBalanceRaw'] >= 0 ? 'Dr' : 'Cr';
+            fputcsv($handle, ['Opening Balance', abs($data['openingBalanceRaw']) . ' ' . $opType]);
             fputcsv($handle, []);
             fputcsv($handle, ['Date', 'Particulars', 'Vch Type', 'Ref / Narration', 'Debit (In)', 'Credit (Out)', 'Balance', 'Dr/Cr']);
 
-            foreach ($entries as $entry) {
+            $runningBalance = $data['openingBalanceRaw'];
+            foreach ($data['entries'] as $row) {
+                $entry = $row['entry'];
                 $runningBalance += ($entry->entry_type == 'Debit' ? $entry->amount : -$entry->amount);
                 
-                $particularsNames = $entry->voucher->entries->where('account_id', '!=', $account->id)->pluck('account.name')->implode(', ');
+                $particularsNames = $row['particulars']->pluck('account.name')->implode(', ');
                 $particularsNames = $particularsNames ?: 'Self / Adjustment';
 
                 fputcsv($handle, [
@@ -128,10 +122,8 @@ public function show($id, Request $request)
                     $runningBalance >= 0 ? 'Dr' : 'Cr'
                 ]);
             }
-
             fclose($handle);
         };
-
         return Response::stream($callback, 200, $headers);
     }
 }
