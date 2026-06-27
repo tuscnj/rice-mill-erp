@@ -20,6 +20,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
     Route::get('/stock', [App\Http\Controllers\ItemController::class, 'stock']);
 
+    // 🚨 NEW INVOICE CENTER ROUTES
+    Route::get('/invoices', [App\Http\Controllers\TransactionController::class, 'invoices']);
+    Route::get('/invoice/{id}', [App\Http\Controllers\TransactionController::class, 'showInvoice']);
+    Route::get('/invoice/{id}/pdf', [App\Http\Controllers\TransactionController::class, 'downloadInvoicePdf']);
+
     // --- DAYBOOK VIEW ---
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
     Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
@@ -88,8 +93,6 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/ledger/{id}', [App\Http\Controllers\LedgerController::class, 'show']);
         Route::get('/ledger/{id}/export', [App\Http\Controllers\LedgerController::class, 'export']);
-        
-        // 🚨 NEW PDF DOWNLOAD ROUTE
         Route::get('/ledger/{id}/pdf', [App\Http\Controllers\LedgerController::class, 'downloadPdf']);
         
         Route::get('/item-ledger/{id}', [App\Http\Controllers\ItemLedgerController::class, 'show']);
@@ -117,7 +120,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-unit/{id}', [App\Http\Controllers\UnitController::class, 'update']);
         Route::get('/delete-unit/{id}', [App\Http\Controllers\UnitController::class, 'destroy']);
 
-        // 🚨 SETTINGS MOVED BACK INSIDE SECURITY WALL
         Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index']);
         Route::post('/update-settings', [App\Http\Controllers\SettingsController::class, 'update']);
     });

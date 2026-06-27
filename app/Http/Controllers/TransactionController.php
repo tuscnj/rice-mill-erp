@@ -11,10 +11,66 @@ use App\Models\Account;
 use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
+use Barryvdh\DomPDF\Facade\Pdf; // 🚨 Required for the PDF Download
 
 class TransactionController extends Controller
 {
-    // Show all transactions (The Detailed Daybook)
+    // ==========================================
+    // NEW INVOICE CENTER METHODS
+    // ==========================================
+    public function invoices(Request $request)
+    {
+        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+        $endDate = $request->query('end_date', now()->toDateString());
+        $type = $request->query('type', 'All');
+        $search = $request->query('search', '');
+
+        // Only fetch transactions that make sense as an "Invoice" or "Bill"
+        $query = Voucher::with(['entries.account', 'inventoryMovements.item'])
+            ->whereDate('voucher_date', '>=', $startDate)
+            ->whereDate('voucher_date', '<=', $endDate)
+            ->whereIn('voucher_type', ['Sales', 'Purchase', 'Sales Return', 'Purchase Return']);
+
+        if ($type !== 'All') {
+            $query->where('voucher_type', $type);
+        }
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('reference_number', 'like', "%{$search}%")
+                  ->orWhere('id', $search)
+                  ->orWhereHas('entries.account', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $invoices = $query->orderBy('voucher_date', 'desc')->orderBy('id', 'desc')->get();
+
+        return view('invoices', compact('invoices', 'startDate', 'endDate', 'type', 'search'));
+    }
+
+    public function showInvoice($id)
+    {
+        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
+        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
+        return view('invoice-preview', compact('voucher', 'setting'));
+    }
+
+    public function downloadInvoicePdf($id)
+    {
+        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
+        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
+        
+        $pdf = Pdf::loadView('invoice-pdf', compact('voucher', 'setting'));
+        
+        $fileName = 'Invoice-' . $voucher->voucher_type . '-' . $voucher->id . '.pdf';
+        return $pdf->download($fileName);
+    }
+
+    // ==========================================
+    // EXISTING DAYBOOK METHODS
+    // ==========================================
     public function index(Request $request)
     {
         $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
@@ -27,7 +83,6 @@ class TransactionController extends Controller
 
         $voucherIds = $vouchers->pluck('id');
 
-        // BULLETPROOF FETCH: Grab all associated inventory & financial records for these specific vouchers
         $movements = InventoryMovement::whereIn('voucher_id', $voucherIds)
             ->leftJoin('items', 'inventory_movements.item_id', '=', 'items.id')
             ->select('inventory_movements.*', 'items.name as item_name', 'items.unit as item_unit')
@@ -75,24 +130,18 @@ class TransactionController extends Controller
         return Response::stream($callback, 200, $headers);
     }
 
-    // THE TRAFFIC COP: Routes to the correct edit screen based on transaction type
     public function edit($id)
     {
         $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
 
-        // ROUTE 1: PURCHASE
         if ($voucher->voucher_type == 'Purchase') {
             $suppliers = Account::where('group_type', 'Sundry Creditors')->get();
             $units = Unit::all();
             $items = Item::orderBy('category')->orderBy('name')->get();
-
             $supplierEntry = $voucher->entries->where('entry_type', 'Credit')->first();
             $partyId = $supplierEntry ? $supplierEntry->account_id : null;
-
             return view('edit-purchase', compact('voucher', 'suppliers', 'units', 'items', 'partyId'));
         }
-
-        // ROUTE 2: MILL PRODUCTION
         elseif ($voucher->voucher_type == 'Production') {
             $rawMaterials = Item::where('category', 'Raw Material')->get();
             $finishedGoods = Item::where('category', 'Finished Goods')->get();
@@ -116,36 +165,25 @@ class TransactionController extends Controller
 
             return view('edit-mill', compact('voucher', 'rawMaterials', 'finishedGoods', 'byproducts', 'units', 'rawMovement', 'riceMovements', 'byproductMovements'));
         }
-
-        // ROUTE 3: SALES
         elseif ($voucher->voucher_type == 'Sales') {
             $customers = Account::where('group_type', 'Sundry Debtors')->get();
             $units = Unit::all();
             $items = Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get();
 
-            // Find the customer ID (The account that was Debited)
             $customerEntry = $voucher->entries->where('entry_type', 'Debit')->first();
             $partyId = $customerEntry ? $customerEntry->account_id : null;
 
             return view('edit-sales', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
-
- // ROUTE 4: EXPENSE
         elseif ($voucher->voucher_type == 'Expense') {
             return view('edit-expense', compact('voucher'));
         }
-
-// ROUTE 5: RECEIPT
         elseif ($voucher->voucher_type == 'Receipt') {
             return view('edit-receipt', compact('voucher'));
         }
-
-// ROUTE 6: OTHER INCOME
         elseif ($voucher->voucher_type == 'Other Income') {
             return view('edit-other-income', compact('voucher'));
         }
-
-// ROUTE 7: SALES RETURN
         elseif ($voucher->voucher_type == 'Sales Return') {
             $customers = Account::where('group_type', 'Sundry Debtors')->get();
             $units = Unit::all();
@@ -156,37 +194,28 @@ class TransactionController extends Controller
 
             return view('edit-sales-return', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
-
-// ROUTE 8: BALANCE TRANSFER
         elseif ($voucher->voucher_type == 'Balance Transfer') {
             $accounts = Account::orderBy('name')->get();
             return view('edit-balance-transfer', compact('voucher', 'accounts'));
         }
-
-        // ROUTE 9: STOCK ADJUSTMENT (Journal)
         elseif ($voucher->voucher_type == 'Journal' || $voucher->voucher_type == 'Stock Adjustment') {
             $items = Item::orderBy('name')->get();
             return view('edit-stock-adjustment', compact('voucher', 'items'));
         }
-
-        // ROUTE 10: PURCHASE RETURN
         elseif ($voucher->voucher_type == 'Purchase Return') {
             $suppliers = Account::where('group_type', 'Sundry Creditors')->get();
             $units = Unit::all();
             $items = Item::orderBy('category')->orderBy('name')->get();
 
-            // Find the supplier ID (The account that was Debited during the return)
             $supplierEntry = $voucher->entries->where('entry_type', 'Debit')->first();
             $partyId = $supplierEntry ? $supplierEntry->account_id : null;
 
             return view('edit-purchase-return', compact('voucher', 'suppliers', 'units', 'items', 'partyId'));
         }
 
-        // FALLBACK: If it's a type we haven't built an edit screen for yet
         return redirect('/transactions')->with('error', 'The full edit screen for ' . $voucher->voucher_type . ' is currently under construction!');
     }
     
-    // Safely delete and reverse a transaction
     public function destroy($id)
     {
         DB::transaction(function () use ($id) {
