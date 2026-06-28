@@ -9,10 +9,16 @@ return new class extends Migration
     public function up()
     {
         Schema::table('accounts', function (Blueprint $table) {
-            $table->string('mobile_number')->nullable()->after('group_type');
-            $table->text('address')->nullable()->after('mobile_number');
-            // The default is true (1) so all your existing accounts remain active automatically
-            $table->boolean('is_active')->default(true)->after('address'); 
+            // Check if column exists before trying to add it!
+            if (!Schema::hasColumn('accounts', 'mobile_number')) {
+                $table->string('mobile_number')->nullable()->after('group_type');
+            }
+            if (!Schema::hasColumn('accounts', 'address')) {
+                $table->text('address')->nullable()->after('mobile_number');
+            }
+            if (!Schema::hasColumn('accounts', 'is_active')) {
+                $table->boolean('is_active')->default(true)->after('address');
+            }
         });
     }
 
