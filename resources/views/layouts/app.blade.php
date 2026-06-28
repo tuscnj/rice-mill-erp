@@ -13,7 +13,7 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-gray-300 flex flex-col h-full shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0">
         <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                🌾 <span class="tracking-wide">Atik Auto Rice</span>
+                🌾 <span class="tracking-wide">M/S Atik Auto Rice Mills</span>
             </div>
             <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -24,9 +24,9 @@
             <a href="/" class="block px-6 py-3 hover:bg-slate-800 hover:text-white transition {{ request()->is('/') ? 'bg-blue-600 text-white' : '' }}">📊 Dashboard</a>
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Operations</div>
-            <a href="/purchase" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📥 Buy Paddy</a>
-            <a href="/mill" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚙️ Run Mill</a>
-            <a href="/sales" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📤 Sell Rice</a>
+            <a href="/purchase" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📥 Purchase</a>
+            <a href="/mill" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">⚙️ Production</a>
+            <a href="/sales" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📤 Sell</a>
             <a href="/sales-return" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">↩️ Sales Return</a>
             <a href="/purchase-return" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">↪️ Purchase Return</a>
             <a href="/stock-adjustment" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">🛠️ Stock Adjustment</a>
@@ -36,8 +36,8 @@
             <a href="/payment" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💸 Pay Supplier</a>
             <a href="/balance-transfer" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">🔁 Balance Transfer</a>
             <a href="/receipt" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💰 Receive Money</a>
-            <a href="/expense" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📉 Log Expense</a>
-            <a href="/other-income" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💵 Log Other Income</a>
+            <a href="/expense" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">📉 Expense</a>
+            <a href="/other-income" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition">💵 Other Incomes</a>
             
             <div class="px-6 pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
             <a href="/invoices" class="block px-6 py-2.5 hover:bg-slate-800 hover:text-white transition text-emerald-400">🧾 Invoice Center</a>
