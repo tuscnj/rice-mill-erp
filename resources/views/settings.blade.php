@@ -43,7 +43,7 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Company Logo (For Printing)</label>
                         <div class="flex items-center gap-6">
                             @if($setting->logo_path)
-                                <img src="{{ asset('/' . $setting->logo_path) }}" alt="Logo" class="h-20 w-auto rounded-lg border border-gray-200 p-1">
+                                <img src="/{{ $setting->logo_path }}" alt="Logo" class="h-20 w-auto rounded-lg border border-gray-200 p-1">
                             @else
                                 <div class="h-20 w-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 text-xs">No Logo</div>
                             @endif
