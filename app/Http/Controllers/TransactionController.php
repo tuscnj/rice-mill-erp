@@ -11,13 +11,10 @@ use App\Models\Account;
 use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
-use Barryvdh\DomPDF\Facade\Pdf; // 🚨 Required for the PDF Download
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransactionController extends Controller
 {
-    // ==========================================
-    // NEW INVOICE CENTER METHODS
-    // ==========================================
     public function invoices(Request $request)
     {
         $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
@@ -25,15 +22,12 @@ class TransactionController extends Controller
         $type = $request->query('type', 'All');
         $search = $request->query('search', '');
 
-        // Only fetch transactions that make sense as an "Invoice" or "Bill"
         $query = Voucher::with(['entries.account', 'inventoryMovements.item'])
             ->whereDate('voucher_date', '>=', $startDate)
             ->whereDate('voucher_date', '<=', $endDate)
             ->whereIn('voucher_type', ['Sales', 'Purchase', 'Sales Return', 'Purchase Return']);
 
-        if ($type !== 'All') {
-            $query->where('voucher_type', $type);
-        }
+        if ($type !== 'All') $query->where('voucher_type', $type);
 
         if (!empty($search)) {
             $query->where(function($q) use ($search) {
@@ -46,30 +40,62 @@ class TransactionController extends Controller
         }
 
         $invoices = $query->orderBy('voucher_date', 'desc')->orderBy('id', 'desc')->get();
-
         return view('invoices', compact('invoices', 'startDate', 'endDate', 'type', 'search'));
+    }
+
+    // 🚨 NEW HELPER ENGINE: Calculates past balances for invoices flawlessly
+    private function getInvoiceData($id)
+    {
+        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
+        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
+
+        $partyEntry = $voucher->entries->filter(function ($e) { 
+            return in_array($e->account->group_type ?? '', ['Sundry Debtors', 'Sundry Creditors']); 
+        })->first();
+        
+        $party = $partyEntry ? $partyEntry->account : null;
+        $totalAmount = $partyEntry ? $partyEntry->amount : $voucher->entries->where('entry_type', 'Debit')->sum('amount');
+
+        $previousBalanceRaw = 0;
+        
+        // Scan the ledger for every transaction that happened BEFORE this exact invoice
+        if ($party) {
+            $previousEntries = VoucherEntry::where('account_id', $party->id)
+                ->whereHas('voucher', function($q) use ($voucher) {
+                    $q->whereDate('voucher_date', '<', $voucher->voucher_date)
+                      ->orWhere(function($q2) use ($voucher) {
+                          $q2->whereDate('voucher_date', '=', $voucher->voucher_date)
+                             ->where('id', '<', $voucher->id);
+                      });
+                })->get();
+
+            foreach ($previousEntries as $entry) {
+                $previousBalanceRaw += ($entry->entry_type == 'Debit' ? $entry->amount : -$entry->amount);
+            }
+        }
+        
+        // Add the current invoice to the previous balance to get the new total
+        $currentEntryAmount = $partyEntry ? ($partyEntry->entry_type == 'Debit' ? $partyEntry->amount : -$partyEntry->amount) : 0;
+        $currentBalanceRaw = $previousBalanceRaw + $currentEntryAmount;
+
+        return compact('voucher', 'setting', 'party', 'totalAmount', 'previousBalanceRaw', 'currentBalanceRaw');
     }
 
     public function showInvoice($id)
     {
-        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
-        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
-        return view('invoice-preview', compact('voucher', 'setting'));
+        return view('invoice-preview', $this->getInvoiceData($id));
     }
 
     public function downloadInvoicePdf($id)
     {
-        $voucher = Voucher::with(['entries.account', 'inventoryMovements.item'])->findOrFail($id);
-        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
-        
-        $pdf = Pdf::loadView('invoice-pdf', compact('voucher', 'setting'));
-        
-        $fileName = 'Invoice-' . $voucher->voucher_type . '-' . $voucher->id . '.pdf';
+        $data = $this->getInvoiceData($id);
+        $pdf = Pdf::loadView('invoice-pdf', $data);
+        $fileName = 'Invoice-' . $data['voucher']->voucher_type . '-' . $data['voucher']->id . '.pdf';
         return $pdf->download($fileName);
     }
 
     // ==========================================
-    // EXISTING DAYBOOK METHODS
+    // EXISTING DAYBOOK & EDIT METHODS
     // ==========================================
     public function index(Request $request)
     {
@@ -126,7 +152,6 @@ class TransactionController extends Controller
             }
             fclose($handle);
         };
-
         return Response::stream($callback, 200, $headers);
     }
 
@@ -175,15 +200,9 @@ class TransactionController extends Controller
 
             return view('edit-sales', compact('voucher', 'customers', 'units', 'items', 'partyId'));
         }
-        elseif ($voucher->voucher_type == 'Expense') {
-            return view('edit-expense', compact('voucher'));
-        }
-        elseif ($voucher->voucher_type == 'Receipt') {
-            return view('edit-receipt', compact('voucher'));
-        }
-        elseif ($voucher->voucher_type == 'Other Income') {
-            return view('edit-other-income', compact('voucher'));
-        }
+        elseif ($voucher->voucher_type == 'Expense') return view('edit-expense', compact('voucher'));
+        elseif ($voucher->voucher_type == 'Receipt') return view('edit-receipt', compact('voucher'));
+        elseif ($voucher->voucher_type == 'Other Income') return view('edit-other-income', compact('voucher'));
         elseif ($voucher->voucher_type == 'Sales Return') {
             $customers = Account::where('group_type', 'Sundry Debtors')->get();
             $units = Unit::all();
@@ -213,7 +232,7 @@ class TransactionController extends Controller
             return view('edit-purchase-return', compact('voucher', 'suppliers', 'units', 'items', 'partyId'));
         }
 
-        return redirect('/transactions')->with('error', 'The full edit screen for ' . $voucher->voucher_type . ' is currently under construction!');
+        return redirect('/transactions')->with('error', 'The full edit screen is currently under construction!');
     }
     
     public function destroy($id)
@@ -253,16 +272,14 @@ class TransactionController extends Controller
                         if ($entry->entry_type == 'Credit') $account->increment('balance', $entry->amount);
                     }
                     elseif ($account->group_type == 'Direct Incomes') {
-                        if ($entry->entry_type == 'Credit') $account->decrement('balance', $entry->amount); // Reverse Sales
+                        if ($entry->entry_type == 'Credit') $account->decrement('balance', $entry->amount); 
                     }
                     elseif ($account->group_type == 'Direct Expenses') {
-                        if ($entry->entry_type == 'Debit') $account->decrement('balance', $entry->amount); // Reverse Purchases
+                        if ($entry->entry_type == 'Debit') $account->decrement('balance', $entry->amount); 
                     }
                 }
             }
             VoucherEntry::where('voucher_id', $id)->delete();
-
-            // 3. FINALLY, DELETE THE VOUCHER RECORD
             $voucher->delete();
         });
 

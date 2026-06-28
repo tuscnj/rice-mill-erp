@@ -2,12 +2,6 @@
 @section('title', 'Invoice Preview')
 @section('content')
 @php
-    // Find the main party (Customer or Supplier)
-    $partyEntry = $voucher->entries->whereIn('account.group_type', ['Sundry Debtors', 'Sundry Creditors'])->first();
-    $party = $partyEntry ? $partyEntry->account : null;
-    $totalAmount = $partyEntry ? $partyEntry->amount : $voucher->entries->where('entry_type', 'Debit')->sum('amount');
-    
-    // Securely load the logo for native printing
     $logoData = '';
     if($setting->logo_path && file_exists(public_path($setting->logo_path))) {
         $type = pathinfo(public_path($setting->logo_path), PATHINFO_EXTENSION);
@@ -16,7 +10,7 @@
     }
 @endphp
 
-<div class="max-w-4xl mx-auto space-y-6 pb-12 font-sans print:max-w-full print:w-full print:mx-0 print:p-0">
+<div class="max-w-5xl mx-auto space-y-6 pb-12 font-sans print:max-w-full print:w-full print:mx-0 print:p-0">
     
     {{-- ACTION BAR (Hidden when printing) --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 print:hidden">
@@ -106,22 +100,40 @@
         </div>
         @endif
 
-        {{-- TOTALS & NARRATION --}}
+        {{-- 🚨 REDESIGNED TOTALS & BALANCES --}}
         <div class="flex flex-col sm:flex-row justify-between items-start gap-8">
             <div class="flex-1 w-full">
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Narration / Notes:</p>
                 <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">{{ $voucher->notes ?? 'No additional notes provided.' }}</p>
             </div>
             
-            <div class="w-full sm:w-1/3 bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
-                <div class="p-4 flex justify-between items-center border-b border-slate-200">
-                    <span class="font-bold text-slate-600 text-sm">Subtotal:</span>
-                    <span class="font-mono text-slate-800">৳ {{ number_format($totalAmount, 2) }}</span>
-                </div>
-                <div class="p-4 flex justify-between items-center bg-slate-800 text-white">
-                    <span class="font-bold text-lg">TOTAL:</span>
-                    <span class="font-mono font-bold text-lg">৳ {{ number_format($totalAmount, 2) }}</span>
-                </div>
+            <div class="w-full sm:w-2/5 xl:w-1/3">
+                <table class="w-full text-right">
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 text-slate-500 font-bold text-sm">Invoice Amount:</td>
+                        <td class="py-2 font-mono text-slate-800 font-bold">৳ {{ number_format($totalAmount, 2) }}</td>
+                    </tr>
+                    
+                    @if($party)
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 text-slate-500 font-bold text-sm">Previous Balance:</td>
+                        <td class="py-2 font-mono text-slate-800">
+                            {{ number_format(abs($previousBalanceRaw), 2) }} <span class="text-[10px] text-slate-500">{{ $previousBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                        </td>
+                    </tr>
+                    <tr class="bg-slate-800 text-white border border-slate-800">
+                        <td class="py-3 px-4 font-bold text-base rounded-l-lg">NET BALANCE:</td>
+                        <td class="py-3 px-4 font-mono font-bold text-base rounded-r-lg">
+                            {{ number_format(abs($currentBalanceRaw), 2) }} <span class="text-xs text-slate-300">{{ $currentBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                        </td>
+                    </tr>
+                    @else
+                    <tr class="bg-slate-800 text-white border border-slate-800">
+                        <td class="py-3 px-4 font-bold text-lg rounded-l-lg">TOTAL:</td>
+                        <td class="py-3 px-4 font-mono font-bold text-lg rounded-r-lg">৳ {{ number_format($totalAmount, 2) }}</td>
+                    </tr>
+                    @endif
+                </table>
             </div>
         </div>
 

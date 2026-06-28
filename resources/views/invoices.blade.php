@@ -50,34 +50,32 @@
                         <th class="p-4 font-bold w-28">Date</th>
                         <th class="p-4 font-bold w-32">Invoice #</th>
                         <th class="p-4 font-bold">Party Details</th>
-                        <th class="p-4 font-bold w-32 text-right">Total Amount</th>
+                        <th class="p-4 font-bold w-36 text-right">Total Amount</th>
                         <th class="p-4 font-bold w-24 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse($invoices as $inv)
                         @php
-                            // Determine the Party and the total amount billed
                             $party = $inv->entries->whereIn('account.group_type', ['Sundry Debtors', 'Sundry Creditors'])->first();
                             $partyName = $party ? $party->account->name : 'Unknown Party';
-                            
-                            // For sales and returns, calculate the total value of the invoice
                             $amount = $inv->entries->where('entry_type', 'Debit')->sum('amount');
                         @endphp
                         
                         <tr class="hover:bg-slate-50 transition align-middle">
-                            <td class="p-4 text-xs font-semibold text-gray-700">
+                            <td class="p-4 text-xs font-semibold text-gray-700 whitespace-nowrap">
                                 {{ \Carbon\Carbon::parse($inv->voucher_date)->format('d-M-y') }}
                             </td>
                             
                             <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
+                                {{-- 🚨 ADDED inline-block and whitespace-nowrap so "RETURN" never breaks layout --}}
+                                <span class="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap
                                     {{ $inv->voucher_type == 'Purchase' ? 'bg-blue-50 text-blue-700' : '' }}
                                     {{ $inv->voucher_type == 'Sales' ? 'bg-purple-50 text-purple-700' : '' }}
                                     {{ str_contains($inv->voucher_type, 'Return') ? 'bg-orange-50 text-orange-700' : '' }}">
                                     {{ $inv->voucher_type }}
                                 </span>
-                                <div class="text-[10px] text-gray-400 mt-1.5 font-mono tracking-wider">#VCH-{{ $inv->id }}</div>
+                                <div class="text-[10px] text-gray-400 mt-1.5 font-mono tracking-wider whitespace-nowrap">#VCH-{{ $inv->id }}</div>
                             </td>
 
                             <td class="p-4">
@@ -87,7 +85,8 @@
                                 @endif
                             </td>
 
-                            <td class="p-4 text-right font-mono font-bold text-gray-900">
+                            {{-- 🚨 ADDED whitespace-nowrap so the currency symbol stays beside the numbers --}}
+                            <td class="p-4 text-right font-mono font-bold text-gray-900 whitespace-nowrap">
                                 ৳ {{ number_format($amount, 2) }}
                             </td>
 

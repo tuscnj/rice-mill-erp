@@ -26,10 +26,9 @@
         .notes h4 { margin: 0 0 5px 0; font-size: 11px; color: #777; text-transform: uppercase; }
         .notes p { margin: 0; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; }
         .totals { display: table-cell; width: 45%; vertical-align: top; }
-        .totals table { width: 100%; border: 1px solid #e2e8f0; background: #f8fafc; }
-        .totals th, .totals td { border: none; padding: 12px; }
-        .totals .subtotal { border-bottom: 1px solid #e2e8f0; }
-        .totals .grand-total { background-color: #1e293b; color: white; font-size: 16px; font-weight: bold; }
+        .totals table { width: 100%; border-collapse: collapse; background: #fff; }
+        .totals td { padding: 8px 12px; border: none; border-bottom: 1px solid #e2e8f0; }
+        .totals .grand-total td { background-color: #1e293b; color: white; font-weight: bold; border: none; }
         .footer { width: 100%; margin-top: 80px; display: table; }
         .footer td { text-align: center; width: 50%; }
         .sig-line { border-top: 1px solid #222; width: 200px; margin: 0 auto; padding-top: 5px; font-weight: bold; font-size: 11px; }
@@ -37,10 +36,6 @@
 </head>
 <body>
     @php
-        $partyEntry = $voucher->entries->whereIn('account.group_type', ['Sundry Debtors', 'Sundry Creditors'])->first();
-        $party = $partyEntry ? $partyEntry->account : null;
-        $totalAmount = $partyEntry ? $partyEntry->amount : $voucher->entries->where('entry_type', 'Debit')->sum('amount');
-        
         $logoData = '';
         if($setting->logo_path && file_exists(public_path($setting->logo_path))) {
             $type = pathinfo(public_path($setting->logo_path), PATHINFO_EXTENSION);
@@ -78,7 +73,7 @@
         </tr>
     </table>
 
-    <table style="width: 100%; border: none; margin-bottom: 20px;">
+    <table style="border: none; margin-bottom: 20px;">
         <tr>
             <td style="border: none; padding: 0; width: 50%;">
                 <div class="bill-to">
@@ -131,15 +126,30 @@
             <p>{{ $voucher->notes ?? 'No additional notes provided.' }}</p>
         </div>
         <div class="totals">
-            <table style="margin: 0; padding: 0; border-collapse: collapse;">
-                <tr class="subtotal">
-                    <td style="border: none; color: #555;"><strong>Subtotal:</strong></td>
-                    <td class="text-right" style="border: none;">৳ {{ number_format($totalAmount, 2) }}</td>
+            <table>
+                <tr>
+                    <td style="color: #555;"><strong>Invoice Amount:</strong></td>
+                    <td class="text-right"><strong>৳ {{ number_format($totalAmount, 2) }}</strong></td>
+                </tr>
+                @if($party)
+                <tr>
+                    <td style="color: #555;"><strong>Previous Balance:</strong></td>
+                    <td class="text-right">
+                        {{ number_format(abs($previousBalanceRaw), 2) }} {{ $previousBalanceRaw >= 0 ? 'Dr' : 'Cr' }}
+                    </td>
                 </tr>
                 <tr class="grand-total">
-                    <td style="border: none; padding: 12px; font-size: 16px;">TOTAL:</td>
-                    <td class="text-right" style="border: none; padding: 12px; font-size: 16px;">৳ {{ number_format($totalAmount, 2) }}</td>
+                    <td style="padding: 12px; font-size: 14px;">NET BALANCE:</td>
+                    <td class="text-right" style="padding: 12px; font-size: 14px;">
+                        {{ number_format(abs($currentBalanceRaw), 2) }} {{ $currentBalanceRaw >= 0 ? 'Dr' : 'Cr' }}
+                    </td>
                 </tr>
+                @else
+                <tr class="grand-total">
+                    <td style="padding: 12px; font-size: 16px;">TOTAL:</td>
+                    <td class="text-right" style="padding: 12px; font-size: 16px;">৳ {{ number_format($totalAmount, 2) }}</td>
+                </tr>
+                @endif
             </table>
         </div>
     </div>
