@@ -32,23 +32,21 @@ class SettingsController extends Controller
         $setting->phone = $request->phone;
         $setting->email = $request->email;
 
-        // Handle Logo Upload securely
+// Handle Logo Upload securely
         if ($request->hasFile('logo')) {
-            // Delete old logo if it exists so we don't clutter your server
+            // Delete old logo
             if ($setting->logo_path && File::exists(public_path($setting->logo_path))) {
                 File::delete(public_path($setting->logo_path));
             }
 
             $file = $request->file('logo');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            // 🚨 FIX: Get the original extension (png/svg) so transparency is kept
+            $extension = $file->getClientOriginalExtension();
+            $filename = time() . '_' . uniqid() . '.' . $extension;
+            
             // Move to the public/uploads/logos folder
             $file->move(public_path('uploads/logos'), $filename);
             
             $setting->logo_path = 'uploads/logos/' . $filename;
         }
-
-        $setting->save();
-
-        return redirect('/settings')->with('success', 'Company settings updated successfully!');
-    }
-}
