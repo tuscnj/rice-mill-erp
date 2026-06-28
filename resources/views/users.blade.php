@@ -14,7 +14,14 @@
             <div class="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-bold">{{ session('error') }}</div>
         @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- 🚨 ADDED ERROR DISPLAY: So you know if an email is a duplicate or password is too short! --}}
+        @if($errors->any())
+            <div class="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-bold">
+                ⚠️ {{ $errors->first() }}
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -31,7 +38,7 @@
                             <input type="email" name="email" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password (Min 6 Characters)</label>
                             <input type="text" name="password" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div>
