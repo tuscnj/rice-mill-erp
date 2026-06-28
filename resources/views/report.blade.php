@@ -39,11 +39,17 @@
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                         <button type="submit" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition">Generate</button>
+                        
+                        {{-- 🚨 NEW: PDF Download Button --}}
+                        <button type="submit" name="export" value="pdf" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            PDF
+                        </button>
                     </div>
                 </form>
 
-                <button onclick="window.print()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <button onclick="window.print()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition flex justify-center items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Print
                 </button>
             </div>
@@ -223,7 +229,7 @@
                     <p class="text-2xl font-black text-gray-700 mt-1">{{ number_format($productionStats['byproduct'], 2) }} KG</p>
                 </div>
                 <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-sm text-white text-center">
-                    <p class="text-sm font-bold text-green-100 uppercase tracking-widest">Yield Ratio (Paddy to Rice)</p>
+                    <p class="text-sm font-bold text-green-100 uppercase tracking-widest">Yield Ratio</p>
                     <p class="text-4xl font-black mt-1">{{ number_format($productionStats['yield'], 2) }}%</p>
                 </div>
             </div>
@@ -318,6 +324,5 @@
                 </div>
             </div>
         @endif
-
     </div>
 @endsection

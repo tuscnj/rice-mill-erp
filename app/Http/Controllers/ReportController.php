@@ -9,6 +9,7 @@ use App\Models\InventoryMovement;
 use App\Models\Account;
 use App\Models\Item;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf; // 🚨 Added for PDF Generation
 
 class ReportController extends Controller
 {
@@ -17,7 +18,6 @@ class ReportController extends Controller
         // 1. Handle Global Filters
         $reportType = $request->input('report_type', 'Profit_Loss');
         
-        // Default P&L to 1 year, but transaction reports to 1 month for better performance
         $defaultStart = $reportType === 'Profit_Loss' ? Carbon::now()->subYear()->format('Y-m-d') : Carbon::now()->startOfMonth()->format('Y-m-d');
         
         $startDate = $request->input('start_date', $defaultStart);
@@ -27,7 +27,7 @@ class ReportController extends Controller
         $displayEndDate = Carbon::parse($endDate)->format('d-M-Y');
 
         // ==========================================
-        // REPORT 1: PROFIT & LOSS (Your Existing Logic)
+        // REPORT 1: PROFIT & LOSS (Tally ERP Logic)
         // ==========================================
         if ($reportType === 'Profit_Loss') {
             $voucherIds = Voucher::whereDate('voucher_date', '>=', $startDate)->whereDate('voucher_date', '<=', $endDate)->pluck('id');
@@ -47,13 +47,17 @@ class ReportController extends Controller
             $totalClosingStock = 0;
 
             foreach ($items as $item) {
+                $rate = (float)($item->purchase_rate ?? 0);
+                
+                // Tally Logic: Opening stock is all movements BEFORE the start date
                 $inBefore = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'In')->whereHas('voucher', function($q) use ($startDate) { $q->whereDate('voucher_date', '<', $startDate); })->sum('quantity');
                 $outBefore = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'Out')->whereHas('voucher', function($q) use ($startDate) { $q->whereDate('voucher_date', '<', $startDate); })->sum('quantity');
-                $totalOpeningStock += (($item->opening_stock + $inBefore - $outBefore) * $item->purchase_rate);
+                $totalOpeningStock += (((float)$item->opening_stock + $inBefore - $outBefore) * $rate);
 
+                // Tally Logic: Closing stock is all movements UP TO the end date
                 $inUpTo = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'In')->whereHas('voucher', function($q) use ($endDate) { $q->whereDate('voucher_date', '<=', $endDate); })->sum('quantity');
                 $outUpTo = InventoryMovement::where('item_id', $item->id)->where('movement_type', 'Out')->whereHas('voucher', function($q) use ($endDate) { $q->whereDate('voucher_date', '<=', $endDate); })->sum('quantity');
-                $totalClosingStock += (($item->opening_stock + $inUpTo - $outUpTo) * $item->purchase_rate);
+                $totalClosingStock += (((float)$item->opening_stock + $inUpTo - $outUpTo) * $rate);
             }
 
             $purchases = $getBalances('Direct Expenses', 'Debit');
@@ -77,48 +81,50 @@ class ReportController extends Controller
             $netProfit = $totalRightPL > $totalLeftPL ? $totalRightPL - $totalLeftPL : 0;
             $netLoss = $totalLeftPL > $totalRightPL ? $totalLeftPL - $totalRightPL : 0;
             $plTotal = max($totalLeftPL, $totalRightPL);
-
-            return view('report', compact('startDate', 'endDate', 'displayStartDate', 'displayEndDate', 'reportType', 'totalOpeningStock', 'totalClosingStock', 'purchases', 'totalPurchases', 'sales', 'totalSales', 'grossProfit', 'grossLoss', 'tradingTotal', 'indirectExpenses', 'totalIndirectExpenses', 'indirectIncomes', 'totalIndirectIncomes', 'netProfit', 'netLoss', 'plTotal'));
         }
-
         // ==========================================
         // REPORT 2: TRANSACTION LISTS & RATIOS
         // ==========================================
-        $dbType = str_replace('_', ' ', $reportType); // Convert 'Sales_Return' to 'Sales Return'
-        if ($reportType === 'Stock_Adjustment') $dbType = 'Journal'; // Map your custom name back to DB
-
-        $vouchers = Voucher::with(['entries.account', 'inventoryMovements.item'])
-            ->where('voucher_type', $dbType)
-            ->whereDate('voucher_date', '>=', $startDate)
-            ->whereDate('voucher_date', '<=', $endDate)
-            ->orderBy('voucher_date', 'desc')
-            ->get();
-
-        $totalAmount = 0;
-        $productionStats = ['raw' => 0, 'rice' => 0, 'byproduct' => 0, 'yield' => 0];
-
-        // Unique logic for Production (Calculating Yield Ratio)
-        if ($reportType === 'Production') {
-            foreach($vouchers as $v) {
-                foreach($v->inventoryMovements as $m) {
-                    if (!$m->item) continue;
-                    if ($m->movement_type == 'Out' && $m->item->category == 'Raw Material') $productionStats['raw'] += $m->quantity;
-                    if ($m->movement_type == 'In' && $m->item->category == 'Finished Goods') $productionStats['rice'] += $m->quantity;
-                    if ($m->movement_type == 'In' && $m->item->category == 'Byproduct') $productionStats['byproduct'] += $m->quantity;
-                }
-            }
-            // Yield % = (Total Rice Produced / Total Paddy Used) * 100
-            $productionStats['yield'] = $productionStats['raw'] > 0 ? ($productionStats['rice'] / $productionStats['raw']) * 100 : 0;
-        } 
-        // Logic for all other financial transactions (Summing the amounts)
         else {
-            foreach($vouchers as $v) {
-                $vAmount = $v->entries->where('entry_type', 'Debit')->sum('amount');
-                $v->display_amount = $vAmount;
-                $totalAmount += $vAmount;
+            $dbType = str_replace('_', ' ', $reportType); 
+            if ($reportType === 'Stock_Adjustment') $dbType = 'Journal'; 
+
+            $vouchers = Voucher::with(['entries.account', 'inventoryMovements.item'])
+                ->where('voucher_type', $dbType)
+                ->whereDate('voucher_date', '>=', $startDate)
+                ->whereDate('voucher_date', '<=', $endDate)
+                ->orderBy('voucher_date', 'desc')
+                ->get();
+
+            $totalAmount = 0;
+            $productionStats = ['raw' => 0, 'rice' => 0, 'byproduct' => 0, 'yield' => 0];
+
+            if ($reportType === 'Production') {
+                foreach($vouchers as $v) {
+                    foreach($v->inventoryMovements as $m) {
+                        if (!$m->item) continue;
+                        if ($m->movement_type == 'Out' && $m->item->category == 'Raw Material') $productionStats['raw'] += $m->quantity;
+                        if ($m->movement_type == 'In' && $m->item->category == 'Finished Goods') $productionStats['rice'] += $m->quantity;
+                        if ($m->movement_type == 'In' && $m->item->category == 'Byproduct') $productionStats['byproduct'] += $m->quantity;
+                    }
+                }
+                $productionStats['yield'] = $productionStats['raw'] > 0 ? ($productionStats['rice'] / $productionStats['raw']) * 100 : 0;
+            } else {
+                foreach($vouchers as $v) {
+                    $vAmount = $v->entries->where('entry_type', 'Debit')->sum('amount');
+                    $v->display_amount = $vAmount;
+                    $totalAmount += $vAmount;
+                }
             }
         }
 
-        return view('report', compact('startDate', 'endDate', 'displayStartDate', 'displayEndDate', 'reportType', 'vouchers', 'totalAmount', 'productionStats'));
+        // 🚨 NEW: EXPORT TO PDF LOGIC
+        $setting = \App\Models\Setting::firstOrCreate(['id' => 1]);
+        if ($request->query('export') === 'pdf') {
+            $pdf = Pdf::loadView('report-pdf', get_defined_vars());
+            return $pdf->download($reportType . '-Report-' . $displayStartDate . '-to-' . $displayEndDate . '.pdf');
+        }
+
+        return view('report', get_defined_vars());
     }
 }
