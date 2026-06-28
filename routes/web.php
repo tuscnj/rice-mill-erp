@@ -9,9 +9,10 @@ Route::post('/run-login', [App\Http\Controllers\AuthController::class, 'authenti
 Route::get('/setup-admin', [App\Http\Controllers\AuthController::class, 'setupAdmin']);
 Route::get('/upgrade-me', [App\Http\Controllers\AuthController::class, 'upgradeMe']);
 
+// 🚨 LIVE SERVER MIGRATION COMMAND 
 Route::get('/force-migrate', function () {
     Artisan::call('migrate', ['--force' => true]);
-    return "Live Database Successfully Migrated! The 'role' column has been added.";
+    return "Live Database Successfully Migrated! The new account fields are ready.";
 });
 
 Route::middleware('auth')->group(function () {
@@ -20,7 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
     Route::get('/stock', [App\Http\Controllers\ItemController::class, 'stock']);
 
-    // 🚨 NEW INVOICE CENTER ROUTES
+    // --- INVOICE CENTER ROUTES ---
     Route::get('/invoices', [App\Http\Controllers\TransactionController::class, 'invoices']);
     Route::get('/invoice/{id}', [App\Http\Controllers\TransactionController::class, 'showInvoice']);
     Route::get('/invoice/{id}/pdf', [App\Http\Controllers\TransactionController::class, 'downloadInvoicePdf']);
@@ -29,8 +30,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
     Route::get('/transactions/export', [App\Http\Controllers\TransactionController::class, 'export']);
 
-    // --- OPERATIONS: DATA ENTRY ---
-    Route::get('/purchase', function () { return view('purchase', ['suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->get(), 'customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->get(), 'units' => App\Models\Unit::all(), 'items' => App\Models\Item::orderBy('category')->orderBy('name')->get()]); });
+    // ==========================================
+    // 🚨 OPERATIONS ZONE: INACTIVE LOCK APPLIED
+    // ==========================================
+    Route::get('/purchase', function () { 
+        return view('purchase', [
+            'suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->where('is_active', true)->orderBy('name')->get(), 
+            'customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->where('is_active', true)->orderBy('name')->get(), 
+            'units' => App\Models\Unit::all(), 
+            'items' => App\Models\Item::orderBy('category')->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-purchase', [App\Http\Controllers\PurchaseController::class, 'store']);
     
     Route::get('/mill', function () {
@@ -45,31 +55,75 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('/run-mill', [App\Http\Controllers\MillController::class, 'store']);
     
-    Route::get('/sales', function () { return view('sales', ['customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->get(), 'suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->get(), 'units' => App\Models\Unit::all(), 'items' => App\Models\Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get()]); });
+    Route::get('/sales', function () { 
+        return view('sales', [
+            'customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->where('is_active', true)->orderBy('name')->get(), 
+            'suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->where('is_active', true)->orderBy('name')->get(), 
+            'units' => App\Models\Unit::all(), 
+            'items' => App\Models\Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-sales', [App\Http\Controllers\SalesController::class, 'store']);
     
-    Route::get('/sales-return', function () { return view('sales-return', ['customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->get(), 'units' => App\Models\Unit::all(), 'items' => App\Models\Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get()]); });
+    Route::get('/sales-return', function () { 
+        return view('sales-return', [
+            'customers' => App\Models\Account::where('group_type', 'Sundry Debtors')->where('is_active', true)->orderBy('name')->get(), 
+            'units' => App\Models\Unit::all(), 
+            'items' => App\Models\Item::whereIn('category', ['Finished Goods', 'Byproduct'])->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-sales-return', [App\Http\Controllers\SalesReturnController::class, 'store']);
     
-    Route::get('/purchase-return', function () { return view('purchase-return', ['suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->get(), 'units' => App\Models\Unit::all(), 'items' => App\Models\Item::orderBy('category')->orderBy('name')->get()]); });
+    Route::get('/purchase-return', function () { 
+        return view('purchase-return', [
+            'suppliers' => App\Models\Account::where('group_type', 'Sundry Creditors')->where('is_active', true)->orderBy('name')->get(), 
+            'units' => App\Models\Unit::all(), 
+            'items' => App\Models\Item::orderBy('category')->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-purchase-return', [App\Http\Controllers\PurchaseReturnController::class, 'store']);
     
     Route::get('/stock-adjustment', [App\Http\Controllers\StockAdjustmentController::class, 'index']);
     Route::post('/run-stock-adjustment', [App\Http\Controllers\StockAdjustmentController::class, 'store']);
     
-    Route::get('/balance-transfer', function () { return view('balance-transfer', ['accounts' => App\Models\Account::orderBy('name')->get()]); });
+    Route::get('/balance-transfer', function () { 
+        return view('balance-transfer', [
+            'accounts' => App\Models\Account::where('is_active', true)->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-balance-transfer', [App\Http\Controllers\BalanceTransferController::class, 'store']);
     
-    Route::get('/payment', function () { App\Models\Account::firstOrCreate(['name' => 'Cash in Hand'], ['group_type' => 'Cash', 'balance' => 500000]); return view('payment', ['banks' => App\Models\Account::where('group_type', 'Cash')->get(), 'parties' => App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->orderBy('name')->get()]); });
+    Route::get('/payment', function () { 
+        App\Models\Account::firstOrCreate(['name' => 'Cash in Hand'], ['group_type' => 'Cash', 'balance' => 500000]); 
+        return view('payment', [
+            'banks' => App\Models\Account::where('group_type', 'Cash')->where('is_active', true)->orderBy('name')->get(), 
+            'parties' => App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->where('is_active', true)->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-payment', [App\Http\Controllers\PaymentController::class, 'store']);
     
-    Route::get('/receipt', function () { return view('receipt', ['banks' => App\Models\Account::where('group_type', 'Cash')->get(), 'parties' => App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->orderBy('name')->get()]); });
+    Route::get('/receipt', function () { 
+        return view('receipt', [
+            'banks' => App\Models\Account::where('group_type', 'Cash')->where('is_active', true)->orderBy('name')->get(), 
+            'parties' => App\Models\Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->where('is_active', true)->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-receipt', [App\Http\Controllers\ReceiptController::class, 'store']);
     
-    Route::get('/expense', function () { return view('expense', ['banks' => App\Models\Account::where('group_type', 'Cash')->get(), 'expenses' => App\Models\Account::where('group_type', 'Indirect Expenses')->get()]); });
+    Route::get('/expense', function () { 
+        return view('expense', [
+            'banks' => App\Models\Account::where('group_type', 'Cash')->where('is_active', true)->orderBy('name')->get(), 
+            'expenses' => App\Models\Account::where('group_type', 'Indirect Expenses')->where('is_active', true)->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-expense', [App\Http\Controllers\ExpenseController::class, 'store']);
     
-    Route::get('/other-income', function () { return view('other-income', ['banks' => App\Models\Account::where('group_type', 'Cash')->get(), 'incomes' => App\Models\Account::where('group_type', 'Indirect Incomes')->get()]); });
+    Route::get('/other-income', function () { 
+        return view('other-income', [
+            'banks' => App\Models\Account::where('group_type', 'Cash')->where('is_active', true)->orderBy('name')->get(), 
+            'incomes' => App\Models\Account::where('group_type', 'Indirect Incomes')->where('is_active', true)->orderBy('name')->get()
+        ]); 
+    });
     Route::post('/run-other-income', [App\Http\Controllers\OtherIncomeController::class, 'store']);
 
     // ==========================================

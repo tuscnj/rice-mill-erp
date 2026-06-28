@@ -2,7 +2,7 @@
 @section('title', 'Accounts')
 @section('content')
 
-    <div class="max-w-6xl mx-auto space-y-6 pb-12 mt-4 sm:mt-6">
+    <div class="max-w-7xl mx-auto space-y-6 pb-12 mt-4 sm:mt-6 font-sans">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -34,7 +34,8 @@
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
                     
-                    <div class="md:col-span-5">
+                    {{-- ROW 1 --}}
+                    <div class="md:col-span-4">
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account Name</label>
                         <input type="text" name="name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="e.g. Rahim Traders">
                     </div>
@@ -47,6 +48,25 @@
                             <option value="Cash">Bank / Cash Account</option>
                             <option value="Indirect Expenses">Expense Category</option>
                             <option value="Indirect Incomes">Other Income Category</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                        <input type="text" name="mobile_number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="017...">
+                    </div>
+
+                    {{-- ROW 2 --}}
+                    <div class="md:col-span-6">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Address</label>
+                        <input type="text" name="address" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="Location details...">
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</label>
+                        <select name="is_active" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
+                            <option value="1">🟢 Active (Can Trade)</option>
+                            <option value="0">🔴 Inactive (Blocked)</option>
                         </select>
                     </div>
 
@@ -70,8 +90,9 @@
             <table class="w-full text-left border-collapse hidden md:table">
                 <thead>
                     <tr class="bg-slate-800 text-white text-sm uppercase tracking-wider">
-                        <th class="p-4 font-bold rounded-tl-xl md:rounded-none">Account Name</th>
+                        <th class="p-4 font-bold rounded-tl-xl md:rounded-none">Account Details</th>
                         <th class="p-4 font-bold">Type</th>
+                        <th class="p-4 font-bold text-center">Status</th>
                         <th class="p-4 font-bold text-right">Current Balance</th>
                         <th class="p-4 font-bold text-center rounded-tr-xl md:rounded-none">Action</th>
                     </tr>
@@ -82,9 +103,19 @@
                             $isAsset = in_array($account->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
                         @endphp
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-800 text-base">{{ $account->name }}</td>
+                            <td class="p-4">
+                                <div class="font-bold text-gray-800 text-base">{{ $account->name }}</div>
+                                @if($account->mobile_number) <div class="text-xs text-gray-500 mt-0.5">📞 {{ $account->mobile_number }}</div> @endif
+                            </td>
                             <td class="p-4">
                                 <span class="px-3 py-1 bg-gray-100 border border-gray-200 text-gray-600 rounded-lg text-xs font-bold inline-block">{{ $account->group_type }}</span>
+                            </td>
+                            <td class="p-4 text-center">
+                                @if($account->is_active)
+                                    <span class="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold uppercase">Active</span>
+                                @else
+                                    <span class="px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-[10px] font-bold uppercase">Inactive</span>
+                                @endif
                             </td>
                             <td class="p-4 text-right font-mono font-bold text-base {{ $account->balance == 0 ? 'text-gray-400' : ($isAsset ? 'text-emerald-600' : 'text-red-600') }}">
                                 ৳ {{ number_format(abs($account->balance), 2) }}
@@ -94,47 +125,12 @@
                                 <div class="flex justify-center items-center gap-2">
                                     <a href="/ledger/{{ $account->id }}" class="bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white border border-slate-200 hover:border-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold transition">Ledger</a>
                                     <a href="/edit-account/{{ $account->id }}" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-100 hover:border-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">Edit</a>
-                                    <a href="/delete-account/{{ $account->id }}" onclick="return confirm('Are you sure you want to delete this account?')" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-100 hover:border-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">Delete</a>
                                 </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-
-            <div class="grid grid-cols-1 gap-4 md:hidden">
-                @foreach($accounts as $account)
-                    @php
-                        $isAsset = in_array($account->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
-                    @endphp
-                    
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-bold text-gray-800">{{ $account->name }}</h3>
-                            <div class="mt-1">
-                                <span class="px-2.5 py-1 bg-gray-100 border border-gray-200 text-gray-600 rounded-md text-[10px] font-bold uppercase tracking-wider inline-block">
-                                    {{ $account->group_type }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100 flex justify-between items-center">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Current Balance</span>
-                            <div class="text-right font-mono font-extrabold text-lg {{ $account->balance == 0 ? 'text-gray-400' : ($isAsset ? 'text-emerald-600' : 'text-red-600') }}">
-                                ৳ {{ number_format(abs($account->balance), 2) }}
-                                <span class="text-[10px] text-gray-400 ml-1">{{ $account->balance == 0 ? '' : ($isAsset ? 'Dr' : 'Cr') }}</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2">
-                            <a href="/ledger/{{ $account->id }}" class="text-center text-slate-700 bg-slate-100 py-2.5 rounded-xl font-bold border border-slate-200 text-sm active:bg-slate-200">Ledger</a>
-                            <a href="/edit-account/{{ $account->id }}" class="text-center text-blue-700 bg-blue-50 py-2.5 rounded-xl font-bold border border-blue-100 text-sm active:bg-blue-100">Edit</a>
-                            <a href="/delete-account/{{ $account->id }}" onclick="return confirm('Delete this account?')" class="text-center text-red-700 bg-red-50 py-2.5 rounded-xl font-bold border border-red-100 text-sm active:bg-red-100">Delete</a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
         </div>
     </div>
 @endsection

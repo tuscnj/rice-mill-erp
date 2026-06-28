@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Account extends Model
 {
-    protected $fillable = ['name', 'group_type', 'balance'];
+    // Added the new fields to the fillable array
+    protected $fillable = ['name', 'group_type', 'balance', 'mobile_number', 'address', 'is_active'];
 
     // An account has many entries in the ledger
     public function entries()

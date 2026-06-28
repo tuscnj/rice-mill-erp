@@ -3,74 +3,153 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Account;
+use App\Models\Voucher;
+use App\Models\VoucherEntry;
+use Illuminate\Support\Facades\DB;
 
-class AuthController extends Controller
+class AccountController extends Controller
 {
-    // Show the login screen
-    public function show()
+    public function index()
     {
-        return view('login');
+        $accounts = Account::orderBy('group_type')->orderBy('name')->get();
+        return view('accounts', ['accounts' => $accounts]);
     }
 
-    // Process the login attempt
-    public function authenticate(Request $request)
+    public function edit($id)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+        $account = Account::findOrFail($id);
+        
+        $obEntry = VoucherEntry::where('account_id', $id)
+            ->whereHas('voucher', function($q) {
+                $q->where('voucher_type', 'Opening Balance');
+            })->first();
+        
+        $openingBalance = $obEntry ? $obEntry->amount : 0;
+
+        return view('edit-account', ['account' => $account, 'openingBalance' => $openingBalance]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:accounts,name,' . $id,
+            'group_type' => 'required|string',
+            'mobile_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'is_active' => 'required|boolean'
+        ], [
+            'name.unique' => 'An account with this exact name already exists!'
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/'); 
+        DB::transaction(function () use ($request, $id) {
+            $account = Account::findOrFail($id);
+            $account->update([
+                'name' => $request->name,
+                'group_type' => $request->group_type,
+                'mobile_number' => $request->mobile_number,
+                'address' => $request->address,
+                'is_active' => $request->is_active,
+            ]);
+
+            $newObAmount = (float) $request->opening_balance;
+            $isDebit = in_array($request->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
+
+            $obVoucher = Voucher::where('voucher_type', 'Opening Balance')
+                ->whereHas('entries', function($q) use ($id) {
+                    $q->where('account_id', $id);
+                })->first();
+
+            if ($obVoucher) {
+                $entry = $obVoucher->entries()->where('account_id', $id)->first();
+                $entry->update([
+                    'amount' => $newObAmount,
+                    'entry_type' => $isDebit ? 'Debit' : 'Credit'
+                ]);
+            } else if ($newObAmount > 0) {
+                $voucher = Voucher::create([
+                    'voucher_type' => 'Opening Balance',
+                    'voucher_date' => now()->subYears(10), 
+                    'reference_number' => 'OP-BAL',
+                    'notes' => 'Initial account balance'
+                ]);
+                VoucherEntry::create([
+                    'voucher_id' => $voucher->id,
+                    'account_id' => $account->id,
+                    'amount' => $newObAmount,
+                    'entry_type' => $isDebit ? 'Debit' : 'Credit'
+                ]);
+            }
+
+            $totalDebit = VoucherEntry::where('account_id', $id)->where('entry_type', 'Debit')->sum('amount');
+            $totalCredit = VoucherEntry::where('account_id', $id)->where('entry_type', 'Credit')->sum('amount');
+            
+            if ($isDebit) {
+                $account->balance = $totalDebit - $totalCredit;
+            } else {
+                $account->balance = $totalCredit - $totalDebit;
+            }
+            $account->save();
+        });
+        
+        return redirect('/accounts');
+    }
+
+    public function destroy($id)
+    {
+        $hasTransactions = \App\Models\VoucherEntry::where('account_id', $id)->exists();
+        
+        if ($hasTransactions) {
+            return "<script>alert('🛑 CANNOT DELETE: This account has recorded financial transactions. You may only edit its name.'); window.location.href='/accounts';</script>";
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+        Account::findOrFail($id)->delete();
+        return redirect('/accounts');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:accounts,name',
+            'group_type' => 'required|string',
+            'mobile_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'is_active' => 'required|boolean'
+        ], [
+            'name.unique' => 'An account with this exact name already exists!'
         ]);
-    }
 
-    // Process logout
-    public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/login');
-    }
+        DB::transaction(function () use ($request) {
+            $openingBalance = (float) ($request->opening_balance ?? 0);
 
-    // One-time setup to create accounts
-    public function setupAdmin()
-    {
-        if (User::count() == 0) {
-            // 1. Master Admin Account
-            User::create([
-                'name' => 'Tusar Ahmmed',
-                'email' => 'admin@atikrice.com',
-                'password' => Hash::make('password123'),
-                'role' => 'admin' // Full clearance
+            $account = Account::create([
+                'name' => $request->name,
+                'group_type' => $request->group_type,
+                'balance' => $openingBalance,
+                'mobile_number' => $request->mobile_number,
+                'address' => $request->address,
+                'is_active' => $request->is_active,
             ]);
 
-            // 2. Standard Staff Account (For testing)
-            User::create([
-                'name' => 'Mill Staff',
-                'email' => 'staff@atikrice.com',
-                'password' => Hash::make('password123'),
-                'role' => 'data_entry' // Restricted clearance
-            ]);
+            if ($openingBalance > 0) {
+                $isDebit = in_array($request->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
+                
+                $voucher = Voucher::create([
+                    'voucher_type' => 'Opening Balance',
+                    'voucher_date' => now()->subYears(10), 
+                    'reference_number' => 'OP-BAL',
+                    'notes' => 'Initial account balance'
+                ]);
 
-            return "Master Admin and Staff accounts created! Go to /login to sign in.";
-        }
-        return "Accounts already exist!";
-    }
+                VoucherEntry::create([
+                    'voucher_id' => $voucher->id,
+                    'account_id' => $account->id,
+                    'amount' => $openingBalance,
+                    'entry_type' => $isDebit ? 'Debit' : 'Credit'
+                ]);
+            }
+        });
 
-    // Quick fix: Run this URL once to upgrade your existing account to Admin
-    public function upgradeMe()
-    {
-        User::where('email', 'admin@atikrice.com')->update(['role' => 'admin']);
-        return "Security Clearance Upgraded to Admin!";
+        return redirect('/accounts');
     }
 }
