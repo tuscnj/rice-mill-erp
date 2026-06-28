@@ -131,7 +131,7 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     Route::middleware([\App\Http\Middleware\Admin::class])->group(function () {
         Route::get('/report', [App\Http\Controllers\ReportController::class, 'index']);
-
+        Route::post('/update-payment/{id}', [App\Http\Controllers\PaymentController::class, 'update']);
         Route::post('/delete-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'destroy']);
         Route::get('/edit-transaction/{id}', [App\Http\Controllers\TransactionController::class, 'edit']);
         Route::post('/update-purchase/{id}', [App\Http\Controllers\PurchaseController::class, 'update']);

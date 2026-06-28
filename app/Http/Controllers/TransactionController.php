@@ -215,8 +215,25 @@ class TransactionController extends Controller
         }
         elseif ($voucher->voucher_type == 'Balance Transfer') {
             $accounts = Account::orderBy('name')->get();
-            return view('edit-balance-transfer', compact('voucher', 'accounts'));
+            return view('edit-balance-transfer', compact('voucher', 'accounts'));           
         }
+
+
+elseif ($voucher->voucher_type == 'Payment') {
+            $banks = Account::where('group_type', 'Cash')->get();
+            $parties = Account::whereIn('group_type', ['Sundry Creditors', 'Sundry Debtors'])->orderBy('name')->get();
+            
+            $cashEntry = $voucher->entries->where('entry_type', 'Credit')->first();
+            $partyEntry = $voucher->entries->where('entry_type', 'Debit')->first();
+            
+            $cashId = $cashEntry ? $cashEntry->account_id : null;
+            $partyId = $partyEntry ? $partyEntry->account_id : null;
+            $amount = $partyEntry ? $partyEntry->amount : 0;
+
+            return view('edit-payment', compact('voucher', 'banks', 'parties', 'cashId', 'partyId', 'amount'));
+        }
+
+
         elseif ($voucher->voucher_type == 'Journal' || $voucher->voucher_type == 'Stock Adjustment') {
             $items = Item::orderBy('name')->get();
             return view('edit-stock-adjustment', compact('voucher', 'items'));

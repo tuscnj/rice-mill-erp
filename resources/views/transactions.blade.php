@@ -64,6 +64,7 @@
                         </td>
                         <td class="p-4 align-top">
                             <span class="px-3 py-1 rounded-lg text-xs font-bold inline-block
+                                {{ $voucher->voucher_type == 'Payment' => 'bg-orange-100 text-orange-800 border-orange-200' : '' }}
                                 {{ $voucher->voucher_type == 'Purchase' ? 'bg-blue-50 text-blue-700 border border-blue-200' : '' }}
                                 {{ $voucher->voucher_type == 'Purchase Return' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : '' }}
                                 {{ $voucher->voucher_type == 'Sales' ? 'bg-purple-50 text-purple-700 border border-purple-200' : '' }}
