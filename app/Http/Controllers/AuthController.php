@@ -11,7 +11,6 @@ class AuthController extends Controller
 {
     public function show()
     {
-        // If they are already logged in, send them to the dashboard
         if (Auth::check()) {
             return redirect('/');
         }
@@ -42,7 +41,6 @@ class AuthController extends Controller
         return redirect('/login');
     }
 
-    // Emergency Setup Route
     public function setupAdmin()
     {
         if (User::where('role', 'admin')->exists()) {
@@ -59,7 +57,6 @@ class AuthController extends Controller
         return 'Admin created successfully! Email: admin@admin.com | Password: 123456';
     }
 
-    // Emergency Upgrade Route
     public function upgradeMe()
     {
         if (Auth::check()) {
