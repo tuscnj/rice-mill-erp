@@ -6,5 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $guarded = []; // Allow mass assignment for our settings
+    // 🚨 Added favicon_path
+    protected $fillable = ['company_name', 'address', 'phone', 'email', 'logo_path', 'favicon_path'];
 }

@@ -2,12 +2,20 @@
     $globalSetting = \App\Models\Setting::first();
     $companyName = $globalSetting->company_name ?? 'Atik Auto Rice';
     
-    // 🚨 BULLETPROOF LOGO LOADER (Bypasses cPanel folder restrictions)
+    // Bypass cPanel limitations for the main sidebar logo
     $sidebarLogo = '';
     if($globalSetting && $globalSetting->logo_path && file_exists(public_path($globalSetting->logo_path))) {
         $type = pathinfo(public_path($globalSetting->logo_path), PATHINFO_EXTENSION);
         $data = file_get_contents(public_path($globalSetting->logo_path));
         $sidebarLogo = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
+
+    // 🚨 Bypass cPanel limitations for the Favicon
+    $faviconData = '';
+    if($globalSetting && $globalSetting->favicon_path && file_exists(public_path($globalSetting->favicon_path))) {
+        $type = pathinfo(public_path($globalSetting->favicon_path), PATHINFO_EXTENSION);
+        $data = file_get_contents(public_path($globalSetting->favicon_path));
+        $faviconData = 'data:image/' . $type . ';base64,' . base64_encode($data);
     }
 @endphp
 <!DOCTYPE html>
@@ -16,6 +24,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Control Center') | {{ $companyName }}</title>
+    
+    {{-- 🚨 RENDER THE DYNAMIC FAVICON --}}
+    @if($faviconData)
+        <link rel="icon" href="{{ $faviconData }}">
+    @else
+        <link rel="icon" href="data:;base64,iVBORw0KGgo="> {{-- Blank fallback --}}
+    @endif
+    
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 font-sans flex h-screen overflow-hidden relative">

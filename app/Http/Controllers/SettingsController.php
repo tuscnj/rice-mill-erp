@@ -10,7 +10,6 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        // Get the first settings row, or create an empty one if it doesn't exist
         $setting = Setting::firstOrCreate(['id' => 1]);
         return view('settings', compact('setting'));
     }
@@ -24,7 +23,8 @@ class SettingsController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048', // Max 2MB
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'favicon' => 'nullable|mimes:ico,png,jpg,svg|max:1024', // 🚨 New Favicon Validation
         ]);
 
         $setting->company_name = $request->company_name;
@@ -32,23 +32,28 @@ class SettingsController extends Controller
         $setting->phone = $request->phone;
         $setting->email = $request->email;
 
-// Handle Logo Upload securely
+        // 1. Handle Main Logo
         if ($request->hasFile('logo')) {
-            // Delete old logo
             if ($setting->logo_path && File::exists(public_path($setting->logo_path))) {
                 File::delete(public_path($setting->logo_path));
             }
-
             $file = $request->file('logo');
-            
-            // 🚨 FIX: Get the original extension (png/svg) so transparency is kept
             $extension = $file->getClientOriginalExtension();
-            $filename = time() . '_' . uniqid() . '.' . $extension;
-            
-            // Move to the public/uploads/logos folder
+            $filename = 'logo_' . time() . '_' . uniqid() . '.' . $extension;
             $file->move(public_path('uploads/logos'), $filename);
-            
             $setting->logo_path = 'uploads/logos/' . $filename;
+        }
+
+        // 2. 🚨 Handle Favicon
+        if ($request->hasFile('favicon')) {
+            if ($setting->favicon_path && File::exists(public_path($setting->favicon_path))) {
+                File::delete(public_path($setting->favicon_path));
+            }
+            $file = $request->file('favicon');
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'fav_' . time() . '_' . uniqid() . '.' . $extension;
+            $file->move(public_path('uploads/logos'), $filename);
+            $setting->favicon_path = 'uploads/logos/' . $filename;
         }
 
         $setting->save();
