@@ -13,6 +13,13 @@
         </a>
     </div>
 
+    {{-- 🚨 ADDED ERROR DISPLAY BOX: This will tell you if a save fails! --}}
+    @if($errors->any())
+        <div class="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg font-bold">
+            ⚠️ {{ $errors->first() }}
+        </div>
+    @endif
+
     <div class="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-yellow-500 border border-gray-200">
         <form action="/update-account/{{ $account->id }}" method="POST" class="space-y-6">
             @csrf

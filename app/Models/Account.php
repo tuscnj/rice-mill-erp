@@ -6,10 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Account extends Model
 {
-    // Added the new fields to the fillable array
+    // 🚨 This line is critical! If mobile_number and address are missing here, they will never save!
     protected $fillable = ['name', 'group_type', 'balance', 'mobile_number', 'address', 'is_active'];
 
-    // An account has many entries in the ledger
     public function entries()
     {
         return $this->hasMany(VoucherEntry::class);

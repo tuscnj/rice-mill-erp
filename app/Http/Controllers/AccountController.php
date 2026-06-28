@@ -20,7 +20,6 @@ class AccountController extends Controller
     {
         $account = Account::findOrFail($id);
         
-        // Find existing Opening Balance
         $obEntry = VoucherEntry::where('account_id', $id)
             ->whereHas('voucher', function($q) {
                 $q->where('voucher_type', 'Opening Balance');
@@ -33,10 +32,14 @@ class AccountController extends Controller
 
     public function update(Request $request, $id)
     {
-        // 🚨 ADDED VALIDATION: Prevents renaming an account to a name that already exists (ignores its own ID)
+        // 🚨 SAFER VALIDATION: Forces 0 or 1 instead of strict boolean logic
         $request->validate([
             'name' => 'required|string|max:255|unique:accounts,name,' . $id,
-            'group_type' => 'required|string'
+            'group_type' => 'required|string',
+            'mobile_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'is_active' => 'required|in:0,1', 
+            'opening_balance' => 'nullable|numeric'
         ], [
             'name.unique' => 'An account with this exact name already exists!'
         ]);
@@ -45,7 +48,10 @@ class AccountController extends Controller
             $account = Account::findOrFail($id);
             $account->update([
                 'name' => $request->name,
-                'group_type' => $request->group_type
+                'group_type' => $request->group_type,
+                'mobile_number' => $request->mobile_number,
+                'address' => $request->address,
+                'is_active' => $request->is_active,
             ]);
 
             $newObAmount = (float) $request->opening_balance;
@@ -57,17 +63,15 @@ class AccountController extends Controller
                 })->first();
 
             if ($obVoucher) {
-                // Update existing opening balance
                 $entry = $obVoucher->entries()->where('account_id', $id)->first();
                 $entry->update([
                     'amount' => $newObAmount,
                     'entry_type' => $isDebit ? 'Debit' : 'Credit'
                 ]);
             } else if ($newObAmount > 0) {
-                // Create opening balance if it didn't exist
                 $voucher = Voucher::create([
                     'voucher_type' => 'Opening Balance',
-                    'voucher_date' => now()->subYears(10), // Logged in the past so it stays at the top of the ledger
+                    'voucher_date' => now()->subYears(10), 
                     'reference_number' => 'OP-BAL',
                     'notes' => 'Initial account balance'
                 ]);
@@ -79,7 +83,6 @@ class AccountController extends Controller
                 ]);
             }
 
-            // SELF-HEALING MATH: Recalculate entire account balance from scratch!
             $totalDebit = VoucherEntry::where('account_id', $id)->where('entry_type', 'Debit')->sum('amount');
             $totalCredit = VoucherEntry::where('account_id', $id)->where('entry_type', 'Credit')->sum('amount');
             
@@ -96,7 +99,6 @@ class AccountController extends Controller
 
     public function destroy($id)
     {
-        // SAFETY LOCK: This is required for accounting integrity. 
         $hasTransactions = \App\Models\VoucherEntry::where('account_id', $id)->exists();
         
         if ($hasTransactions) {
@@ -109,10 +111,13 @@ class AccountController extends Controller
 
     public function store(Request $request)
     {
-        // 🚨 ADDED VALIDATION: Prevents creating a new account if the name already exists
         $request->validate([
             'name' => 'required|string|max:255|unique:accounts,name',
-            'group_type' => 'required|string'
+            'group_type' => 'required|string',
+            'mobile_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'is_active' => 'required|in:0,1',
+            'opening_balance' => 'nullable|numeric'
         ], [
             'name.unique' => 'An account with this exact name already exists!'
         ]);
@@ -123,7 +128,10 @@ class AccountController extends Controller
             $account = Account::create([
                 'name' => $request->name,
                 'group_type' => $request->group_type,
-                'balance' => $openingBalance
+                'balance' => $openingBalance,
+                'mobile_number' => $request->mobile_number,
+                'address' => $request->address,
+                'is_active' => $request->is_active,
             ]);
 
             if ($openingBalance > 0) {
@@ -131,7 +139,7 @@ class AccountController extends Controller
                 
                 $voucher = Voucher::create([
                     'voucher_type' => 'Opening Balance',
-                    'voucher_date' => now()->subYears(10), // Logged in the past
+                    'voucher_date' => now()->subYears(10), 
                     'reference_number' => 'OP-BAL',
                     'notes' => 'Initial account balance'
                 ]);
