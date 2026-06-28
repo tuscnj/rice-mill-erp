@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
-    // 🚨 1. ADDED MISSING STORE METHOD (For New Sales)
+    // 🚨 NEW SALES METHOD (This was the missing piece causing the crash!)
     public function store(Request $request)
     {
         DB::transaction(function () use ($request) {
@@ -86,7 +86,7 @@ class SalesController extends Controller
         return redirect('/sales')->with('success', 'Sale recorded successfully!');
     }
 
-    // 🚨 2. FIXED UPDATE METHOD (To edit existing Sales properly)
+    // 🚨 EXISTING UPDATE METHOD (Fixed the math for editing sales)
     public function update(Request $request, $id)
     {
         DB::transaction(function () use ($request, $id) {
@@ -105,9 +105,9 @@ class SalesController extends Controller
                 $account = Account::find($entry->account_id);
                 if ($account) {
                     if ($entry->entry_type == 'Debit') {
-                        $account->decrement('balance', $entry->amount); // Remove old customer debit
+                        $account->decrement('balance', $entry->amount); 
                     } else {
-                        $account->decrement('balance', $entry->amount); // Remove old sales credit
+                        $account->decrement('balance', $entry->amount); 
                     }
                 }
             }
