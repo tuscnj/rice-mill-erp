@@ -50,3 +50,9 @@ class SettingsController extends Controller
             
             $setting->logo_path = 'uploads/logos/' . $filename;
         }
+
+        $setting->save();
+
+        return redirect('/settings')->with('success', 'Company settings updated successfully!');
+    }
+}
