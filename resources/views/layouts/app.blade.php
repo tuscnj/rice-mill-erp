@@ -27,7 +27,7 @@
         <div class="p-5 text-white border-b border-slate-800 flex items-center justify-between gap-2">
             <a href="/" class="flex items-center gap-3 overflow-hidden hover:opacity-80 transition">
                 @if($sidebarLogo)
-                    <img src="{{ $sidebarLogo }}" alt="Logo" class="h-9 w-9 object-contain rounded-md bg-white p-1 shrink-0">
+                    <img src="{{ $sidebarLogo }}" alt="Logo" class="h-10 w-auto object-contain shrink-0">
                 @else
                     <span class="text-2xl shrink-0">🌾</span>
                 @endif
