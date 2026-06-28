@@ -1,14 +1,20 @@
 @php
-    // Fetch global settings so they are available on every single page
     $globalSetting = \App\Models\Setting::first();
     $companyName = $globalSetting->company_name ?? 'Atik Auto Rice';
+    
+    // 🚨 BULLETPROOF LOGO LOADER (Bypasses cPanel folder restrictions)
+    $sidebarLogo = '';
+    if($globalSetting && $globalSetting->logo_path && file_exists(public_path($globalSetting->logo_path))) {
+        $type = pathinfo(public_path($globalSetting->logo_path), PATHINFO_EXTENSION);
+        $data = file_get_contents(public_path($globalSetting->logo_path));
+        $sidebarLogo = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {{-- 🚨 DYNAMIC WEBSITE TITLE --}}
     <title>@yield('title', 'Control Center') | {{ $companyName }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -18,11 +24,10 @@
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-gray-300 flex flex-col h-full shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0">
         
-        {{-- 🚨 DYNAMIC SIDEBAR BRANDING (Logo + Name on one line) --}}
         <div class="p-5 text-white border-b border-slate-800 flex items-center justify-between gap-2">
             <a href="/" class="flex items-center gap-3 overflow-hidden hover:opacity-80 transition">
-                @if($globalSetting && $globalSetting->logo_path)
-                    <img src="/{{ $globalSetting->logo_path }}" alt="Logo" class="h-9 w-9 object-contain rounded-md bg-white p-1 shrink-0">
+                @if($sidebarLogo)
+                    <img src="{{ $sidebarLogo }}" alt="Logo" class="h-9 w-9 object-contain rounded-md bg-white p-1 shrink-0">
                 @else
                     <span class="text-2xl shrink-0">🌾</span>
                 @endif

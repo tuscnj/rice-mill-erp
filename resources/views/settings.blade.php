@@ -2,6 +2,16 @@
 @section('title', 'Global Settings')
 @section('content')
 
+@php
+    // 🚨 BULLETPROOF LOGO LOADER 
+    $settingsLogo = '';
+    if($setting->logo_path && file_exists(public_path($setting->logo_path))) {
+        $type = pathinfo(public_path($setting->logo_path), PATHINFO_EXTENSION);
+        $data = file_get_contents(public_path($setting->logo_path));
+        $settingsLogo = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
+@endphp
+
     <div class="max-w-4xl mx-auto space-y-6 mt-6">
         <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-6 rounded-2xl text-white shadow-md flex justify-between items-center">
             <div>
@@ -42,8 +52,9 @@
                     <div class="md:col-span-2 pt-4 border-t border-gray-100">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Company Logo (For Printing)</label>
                         <div class="flex items-center gap-6">
-                            @if($setting->logo_path)
-                                <img src="/{{ $setting->logo_path }}" alt="Logo" class="h-20 w-auto rounded-lg border border-gray-200 p-1">
+                            
+                            @if($settingsLogo)
+                                <img src="{{ $settingsLogo }}" alt="Logo" class="h-20 w-auto rounded-lg border border-gray-200 p-1">
                             @else
                                 <div class="h-20 w-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 text-xs">No Logo</div>
                             @endif
