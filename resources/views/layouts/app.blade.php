@@ -1,9 +1,15 @@
+@php
+    // Fetch global settings so they are available on every single page
+    $globalSetting = \App\Models\Setting::first();
+    $companyName = $globalSetting->company_name ?? 'Atik Auto Rice';
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rice Mill Control Center</title>
+    {{-- 🚨 DYNAMIC WEBSITE TITLE --}}
+    <title>@yield('title', 'Control Center') | {{ $companyName }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 font-sans flex h-screen overflow-hidden relative">
@@ -11,11 +17,20 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity md:hidden" onclick="toggleSidebar()"></div>
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-gray-300 flex flex-col h-full shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0">
-        <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                🌾 <span class="tracking-wide">M/S Atik Auto Rice Mills</span>
-            </div>
-            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+        
+        {{-- 🚨 DYNAMIC SIDEBAR BRANDING (Logo + Name on one line) --}}
+        <div class="p-5 text-white border-b border-slate-800 flex items-center justify-between gap-2">
+            <a href="/" class="flex items-center gap-3 overflow-hidden hover:opacity-80 transition">
+                @if($globalSetting && $globalSetting->logo_path)
+                    <img src="{{ asset('/' . $globalSetting->logo_path) }}" alt="Logo" class="h-9 w-9 object-contain rounded-md bg-white p-1 shrink-0">
+                @else
+                    <span class="text-2xl shrink-0">🌾</span>
+                @endif
+                <span class="tracking-wide font-extrabold text-sm truncate" title="{{ $companyName }}">
+                    {{ $companyName }}
+                </span>
+            </a>
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
