@@ -87,6 +87,7 @@
 
         <div class="bg-transparent md:bg-white rounded-none md:rounded-2xl shadow-none md:shadow-sm border-none md:border border-gray-100 overflow-hidden">
             
+            {{-- 1. DESKTOP TABLE VIEW (Hidden on Mobile) --}}
             <table class="w-full text-left border-collapse hidden md:table">
                 <thead>
                     <tr class="bg-slate-800 text-white text-sm uppercase tracking-wider">
@@ -131,6 +132,46 @@
                     @endforeach
                 </tbody>
             </table>
+
+            {{-- 2. 🚨 MOBILE CARD VIEW (Hidden on Desktop) --}}
+            <div class="md:hidden space-y-4">
+                @foreach($accounts as $account)
+                    @php
+                        $isAsset = in_array($account->group_type, ['Sundry Debtors', 'Cash', 'Direct Expenses', 'Indirect Expenses']);
+                    @endphp
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-extrabold text-gray-800 text-lg">{{ $account->name }}</h3>
+                                @if($account->mobile_number) 
+                                    <p class="text-xs text-gray-500 font-medium mt-1">📞 {{ $account->mobile_number }}</p>
+                                @endif
+                            </div>
+                            <div>
+                                @if($account->is_active)
+                                    <span class="px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold uppercase tracking-wider">Active</span>
+                                @else
+                                    <span class="px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Inactive</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl mb-4 border border-slate-100">
+                            <span class="px-2 py-1 bg-white border border-gray-200 text-gray-600 rounded text-xs font-bold shadow-sm">{{ $account->group_type }}</span>
+                            <div class="text-right font-mono font-black text-lg {{ $account->balance == 0 ? 'text-gray-400' : ($isAsset ? 'text-emerald-600' : 'text-red-600') }}">
+                                ৳ {{ number_format(abs($account->balance), 2) }}
+                                <span class="text-[10px] text-gray-400 ml-1">{{ $account->balance == 0 ? '' : ($isAsset ? 'Dr' : 'Cr') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <a href="/ledger/{{ $account->id }}" class="text-center bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white border border-slate-200 py-2.5 rounded-xl text-sm font-bold transition shadow-sm">View Ledger</a>
+                            <a href="/edit-account/{{ $account->id }}" class="text-center bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-100 py-2.5 rounded-xl text-sm font-bold transition shadow-sm">Edit Details</a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
         </div>
     </div>
 @endsection
