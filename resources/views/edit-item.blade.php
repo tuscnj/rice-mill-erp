@@ -6,7 +6,8 @@
     <div class="max-w-3xl mx-auto">
         
         <div class="mb-6 flex items-center gap-4">
-            <a href="/items" class="text-gray-500 hover:text-gray-800 transition">
+            {{-- 🚨 FIXED: Back arrow now points to /stock --}}
+            <a href="/stock" class="text-gray-500 hover:text-gray-800 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -21,7 +22,6 @@
             @csrf
             
             <div class="space-y-6">
-                <!-- Name, Category, and Unit -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Item Name</label>
@@ -47,7 +47,6 @@
                     </div>
                 </div>
 
-                <!-- Stock & Rate Fixes -->
                 <div class="p-5 bg-orange-50 border border-orange-200 rounded-xl">
                     <h4 class="font-bold text-orange-800 mb-4 text-sm uppercase tracking-wider border-b border-orange-200 pb-2">Update Inventory Valuations</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -69,9 +68,10 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <a href="/items" class="px-6 py-3 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition">Cancel</a>
+                    {{-- 🚨 FIXED: Cancel button now points to /stock --}}
+                    <a href="/stock" class="px-6 py-3 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition">Cancel</a>
+                    
                     <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition">
                         Save Changes
                     </button>
@@ -80,7 +80,6 @@
         </form>
     </div>
 
-    <!-- Smart Unit Converter Engine -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const unitSelect = document.getElementById('unit-select');
