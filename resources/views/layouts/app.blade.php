@@ -33,6 +33,7 @@
     @endif
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body class="bg-slate-100 font-sans flex h-screen overflow-hidden relative">
 
