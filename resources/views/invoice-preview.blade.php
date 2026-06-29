@@ -12,7 +12,7 @@
 
 <div class="max-w-5xl mx-auto space-y-6 pb-12 font-sans print:max-w-full print:w-full print:mx-0 print:p-0">
     
-    {{-- ACTION BAR (Hidden when printing) --}} here
+    {{-- ACTION BAR (Hidden when printing) --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 print:hidden">
         <div>
             <a href="/invoices" class="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition">
@@ -20,7 +20,7 @@
             </a>
         </div>
         <div class="flex gap-3 w-full sm:w-auto">
-            <button onclick="window.print()" class="flex-1 sm:flex-none justify-center sm:justify-start bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition flex items-center gap-2 text-sm">
+            <button onclick="printDiv();" class="flex-1 sm:flex-none justify-center sm:justify-start bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition flex items-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 Print
             </button>
@@ -32,7 +32,7 @@
     </div>
 
     {{-- INVOICE PAPER (Fixed A4 Size for easy viewing and printing) --}}
-    <div class="bg-white p-8 sm:p-12 border border-gray-200 shadow-sm print:shadow-none print:border-none print:p-0 mt-6 relative overflow-hidden mx-auto w-full" style="max-width: 210mm; min-height: 297mm;">
+    <div class="bg-white p-8 sm:p-12 border border-gray-200 shadow-sm print:shadow-none print:border-none print:p-0 mt-6 relative overflow-hidden mx-auto w-full print-div" style="max-width: 210mm; min-height: 297mm;">
         
         {{-- Decorative Top Accent --}}
         <div class="absolute top-0 left-0 w-full h-2 {{ str_contains($voucher->voucher_type, 'Return') ? 'bg-orange-500' : 'bg-blue-600' }}"></div>
@@ -198,4 +198,33 @@
         .print\:border-none { border: none !important; }
     }
 </style>
+<script>
+function printDiv() {
+    // 1. Get the HTML content of the specific div
+    var printContents = $('.print-div').html();
+    
+    // 2. Open a new temporary window
+    var printWindow = window.open('', '', 'height=600,width=800');
+
+    // 3. Write the HTML structure into the new window
+    printWindow.document.write('<html><head><title>Print</title>');
+    
+    // (Optional) Add your website's CSS here so the print looks styled
+    // printWindow.document.write('<link rel="stylesheet" href="path/to/your/styles.css" type="text/css" />');
+    
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(printContents);
+    printWindow.document.write('</body></html>');
+
+    // 4. Close the document to finish loading
+    printWindow.document.close();
+    printWindow.focus();
+
+    // 5. Trigger the print dialog (with a tiny delay to let content/styles load)
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+}
+</script>
 @endsection
