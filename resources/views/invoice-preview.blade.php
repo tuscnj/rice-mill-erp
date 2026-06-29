@@ -181,7 +181,7 @@
 
 <style>
     @media print {
-        @page { size: A4 portrait; margin: 0mm; }
+        @page { size: A4 portrait; margin: -5mm; }
         body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0;}
         .print\:hidden { display: none !important; }
         .print\:shadow-none { box-shadow: none !important; }
