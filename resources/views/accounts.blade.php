@@ -17,75 +17,85 @@
             </div>
         </div>
 
+        {{-- CREATE NEW ACCOUNT WIDGET (Collapsible on Mobile) --}}
         <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-yellow-500">
-            <div class="flex items-center gap-2 mb-6">
-                <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                <h2 class="text-xl font-bold text-gray-800">Create New Account</h2>
+            
+            {{-- HEADER / TOGGLE BUTTON --}}
+            <div class="flex justify-between items-center cursor-pointer md:cursor-default select-none" id="toggleNewAccountBtn">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    <h2 class="text-xl font-bold text-gray-800">Create New Account</h2>
+                </div>
+                {{-- Chevron icon (Hidden on Desktop) --}}
+                <svg id="newAccountChevron" class="w-6 h-6 text-gray-400 md:hidden transition-transform duration-300 {{ $errors->any() ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
 
-            @if($errors->any())
-                <div class="mb-5 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm font-semibold flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    {{ $errors->first() }}
-                </div>
-            @endif
-
-            <form action="/run-account" method="POST" class="space-y-5">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
-                    
-                    {{-- ROW 1 --}}
-                    <div class="md:col-span-4">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account Name</label>
-                        <input type="text" name="name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="e.g. Rahim Traders">
+            {{-- FORM WRAPPER (Hidden on mobile by default unless there's an error) --}}
+            <div id="newAccountFormWrapper" class="{{ $errors->any() ? 'block' : 'hidden' }} md:block mt-6 transition-all duration-300">
+                @if($errors->any())
+                    <div class="mb-5 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {{ $errors->first() }}
                     </div>
-                    
-                    <div class="md:col-span-4">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account Type</label>
-                        <select name="group_type" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
-                            <option value="Sundry Debtors">Customer (Debtor)</option>
-                            <option value="Sundry Creditors">Supplier (Creditor)</option>
-                            <option value="Cash">Bank / Cash Account</option>
-                            <option value="Indirect Expenses">Expense Category</option>
-                            <option value="Indirect Incomes">Other Income Category</option>
-                        </select>
+                @endif
+
+                <form action="/run-account" method="POST" class="space-y-5">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
+                        
+                        {{-- ROW 1 --}}
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account Name</label>
+                            <input type="text" name="name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="e.g. Rahim Traders">
+                        </div>
+                        
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Account Type</label>
+                            <select name="group_type" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
+                                <option value="Sundry Debtors">Customer (Debtor)</option>
+                                <option value="Sundry Creditors">Supplier (Creditor)</option>
+                                <option value="Cash">Bank / Cash Account</option>
+                                <option value="Indirect Expenses">Expense Category</option>
+                                <option value="Indirect Incomes">Other Income Category</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                            <input type="text" name="mobile_number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="017...">
+                        </div>
+
+                        {{-- ROW 2 --}}
+                        <div class="md:col-span-6">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Address</label>
+                            <input type="text" name="address" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="Location details...">
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</label>
+                            <select name="is_active" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
+                                <option value="1">🟢 Active (Can Trade)</option>
+                                <option value="0">🔴 Inactive (Blocked)</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Opening Bal (৳)</label>
+                            <input type="number" step="0.01" name="opening_balance" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="0.00">
+                        </div>
                     </div>
 
-                    <div class="md:col-span-4">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
-                        <input type="text" name="mobile_number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="017...">
+                    <div class="flex justify-end pt-4 border-t border-gray-100 mt-6">
+                        <button type="submit" class="w-full md:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Account
+                        </button>
                     </div>
-
-                    {{-- ROW 2 --}}
-                    <div class="md:col-span-6">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Address</label>
-                        <input type="text" name="address" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="Location details...">
-                    </div>
-
-                    <div class="md:col-span-3">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</label>
-                        <select name="is_active" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
-                            <option value="1">🟢 Active (Can Trade)</option>
-                            <option value="0">🔴 Inactive (Blocked)</option>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-3">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Opening Bal (৳)</label>
-                        <input type="number" step="0.01" name="opening_balance" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200" placeholder="0.00">
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-4 border-t border-gray-100 mt-6">
-                    <button type="submit" class="w-full md:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Add Account
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
-        {{-- 🚨 ADDED: Instant Live Search Bar --}}
+        {{-- SEARCH & EXISTING ACCOUNTS HEADER --}}
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 mb-2">
             <h2 class="text-xl font-bold text-gray-800 w-full sm:w-auto pl-1">Existing Accounts</h2>
             <div class="relative w-full sm:w-80">
@@ -186,9 +196,11 @@
         </div>
     </div>
 
-    {{-- 🚨 ADDED: JavaScript Engine for Instant Search --}}
+    {{-- JavaScript Engine --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- 1. INSTANT LIVE SEARCH ---
             const searchInput = document.getElementById('liveSearch');
             const desktopRows = document.querySelectorAll('.account-row');
             const mobileCards = document.querySelectorAll('.account-card');
@@ -215,6 +227,19 @@
                         card.style.display = 'none';
                     }
                 });
+            });
+
+            // --- 2. MOBILE FORM TOGGLE ---
+            const toggleBtn = document.getElementById('toggleNewAccountBtn');
+            const formWrapper = document.getElementById('newAccountFormWrapper');
+            const chevron = document.getElementById('newAccountChevron');
+
+            toggleBtn.addEventListener('click', function() {
+                // Only toggle if we are on a mobile screen (Tailwind 'md' breakpoint is 768px)
+                if (window.innerWidth < 768) {
+                    formWrapper.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-180');
+                }
             });
         });
     </script>
