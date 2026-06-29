@@ -214,6 +214,23 @@ Route::get('/setup-brands', function () {
     }
 });
 
+// 🚨 MAGIC ROUTE TO CREATE THE BRANDS TABLE ON CPANEL
+Route::get('/setup-brands', function () {
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('brands')) {
+            \Illuminate\Support\Facades\Schema::create('brands', function ($table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->timestamps();
+            });
+            return '<h1>✅ Brands Table Created Successfully!</h1><p>You can close this tab and go back to your ERP.</p>';
+        }
+        return '<h1>✅ Brands table already exists!</h1>';
+    } catch (\Exception $e) {
+        return '<h1>❌ Error:</h1><p>' . $e->getMessage() . '</p>';
+    }
+});
+
 Route::get('/auto-deploy-cache-clear/{secret}', function($secret) {
     if ($secret !== 'AtikAutoDeploy2026!') return 'Unauthorized';
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
