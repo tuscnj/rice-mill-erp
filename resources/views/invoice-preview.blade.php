@@ -186,7 +186,7 @@
 </div>
 
 <style>
-    /* @media print {
+    @media print {
         @page { size: A4 portrait; margin: 10mm; }
         body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .print\:hidden { display: none !important; }
@@ -196,7 +196,7 @@
         .print\:p-0 { padding: 0 !important; }
         .print\:shadow-none { box-shadow: none !important; }
         .print\:border-none { border: none !important; }
-    } */
+    }
 </style>
 <script>
 function printDiv() { 
@@ -207,14 +207,14 @@ function printDiv() {
     var printWindow = window.open('', '', 'height=600,width=800');
 
     // 3. Write the HTML structure into the new window
-    printWindow.document.write('<html><head><title>Print</title>');
+   // printWindow.document.write('<html><head><title>Print</title>');
     
     // (Optional) Add your website's CSS here so the print looks styled
     // printWindow.document.write('<link rel="stylesheet" href="path/to/your/styles.css" type="text/css" />');
     
-    printWindow.document.write('</head><body>');
+    //printWindow.document.write('</head><body>');
     printWindow.document.write(printContents);
-    printWindow.document.write('</body></html>');
+    //printWindow.document.write('</body></html>');
 
     // 4. Close the document to finish loading
     printWindow.document.close();
