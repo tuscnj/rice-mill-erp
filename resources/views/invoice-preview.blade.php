@@ -65,7 +65,7 @@
                 <h3 class="text-2xl font-extrabold text-slate-900">{{ $party ? $party->name : 'Walk-in / General' }}</h3>
                 
                 @if($party) 
-                    <p class=hidden"text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 inline-block px-2 py-0.5 rounded mt-1 mb-2">{{ $party->group_type }}</p> 
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 inline-block px-2 py-0.5 rounded mt-1 mb-2">{{ $party->group_type }}</p> 
                     
                     <div class="space-y-1">
                         @if($party->mobile_number)
