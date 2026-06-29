@@ -84,7 +84,7 @@
                 <div class="info-header">Billed To:</div>
                 <h2 class="party-name">{{ $party ? $party->name : 'Walk-in / General' }}</h2>
                 @if($party)
-                    <div class="party-type">{{ $party->group_type }}</div>
+                    <div class=hidden"party-type">{{ $party->group_type }}</div>
                     @if($party->mobile_number)<p class="contact-info"><strong>Phone:</strong> {{ $party->mobile_number }}</p>@endif
                     @if($party->address)<p class="contact-info"><strong>Address:</strong> {{ $party->address }}</p>@endif
                 @endif
