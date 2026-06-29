@@ -22,7 +22,7 @@
     $isOps = request()->is('purchase', 'mill', 'sales', 'sales-return', 'purchase-return', 'stock-adjustment', 'stock', 'edit-item/*', 'item-ledger/*');
     $isFin = request()->is('payment', 'balance-transfer', 'receipt', 'expense', 'other-income');
     $isSys = request()->is('invoices', 'transactions', 'invoice/*');
-    $isAdmin = request()->is('report', 'accounts', 'units', 'users', 'settings', 'edit-account/*', 'ledger/*');
+    $isAdmin = request()->is('report', 'accounts', 'units', 'users', 'settings', 'edit-account/*', 'ledger/*', 'brands');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -152,6 +152,7 @@
                         <a href="/report" class="block px-4 py-2 text-sm transition {{ request()->is('report') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">📈 Master Reports</a>
                         <a href="/accounts" class="block px-4 py-2 text-sm transition {{ request()->is('accounts', 'ledger/*', 'edit-account/*') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">📒 Ledgers & Accounts</a>
                         <a href="/units" class="block px-4 py-2 text-sm transition {{ request()->is('units') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">⚖️ Unit Settings</a>
+                        <a href="/brands" class="block px-4 py-2 text-sm transition {{ request()->is('brands') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">🏷️ Brand Management</a>
                         <a href="/users" class="block px-4 py-2 text-sm transition {{ request()->is('users') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">👥 Staff Permissions</a>
                         <a href="/settings" class="block px-4 py-2 text-sm transition {{ request()->is('settings') ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white' }}">⚙️ Site Settings</a>
                     </div>
