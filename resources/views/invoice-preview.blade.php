@@ -12,7 +12,7 @@
 
 <div class="max-w-5xl mx-auto space-y-6 pb-12 font-sans print:max-w-full print:w-full print:mx-0 print:p-0">
     
-    {{-- ACTION BAR (Hidden when printing) --}}
+    {{-- ACTION BAR (Hidden when printing) --}} here
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 print:hidden">
         <div>
             <a href="/invoices" class="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition">
