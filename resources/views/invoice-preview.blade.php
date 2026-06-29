@@ -32,105 +32,130 @@
     </div>
 
     {{-- INVOICE PAPER --}}
-    <div class="bg-white p-8 sm:p-12 rounded-xl shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 mt-6">
+    <div class="bg-white p-8 sm:p-12 rounded-xl shadow-xl border border-gray-200 print:shadow-none print:border-none print:p-0 mt-6 relative overflow-hidden">
         
+        {{-- Decorative Top Border --}}
+        <div class="absolute top-0 left-0 w-full h-2 {{ str_contains($voucher->voucher_type, 'Return') ? 'bg-orange-500' : 'bg-blue-600' }}"></div>
+
         {{-- HEADER --}}
-        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-8">
+        <div class="flex justify-between items-start border-b-2 border-slate-100 pb-6 mb-8 mt-4">
             <div class="flex items-center gap-4">
                 @if($logoData)
                     <img src="{{ $logoData }}" class="h-16 w-auto object-contain">
                 @endif
                 <div>
                     <h1 class="text-3xl font-black text-slate-900 tracking-tight">{{ $setting->company_name }}</h1>
-                    @if($setting->address) <p class="text-sm text-slate-600 mt-1">{{ $setting->address }}</p> @endif
-                    <p class="text-sm text-slate-600">
-                        @if($setting->phone) Phone: {{ $setting->phone }} @endif 
+                    @if($setting->address) <p class="text-sm text-slate-500 mt-1">{{ $setting->address }}</p> @endif
+                    <p class="text-sm text-slate-500 mt-0.5">
+                        @if($setting->phone) <span class="font-semibold text-slate-700">P:</span> {{ $setting->phone }} @endif 
                         @if($setting->phone && $setting->email) | @endif 
-                        @if($setting->email) Email: {{ $setting->email }} @endif
+                        @if($setting->email) <span class="font-semibold text-slate-700">E:</span> {{ $setting->email }} @endif
                     </p>
                 </div>
             </div>
             <div class="text-right">
-                <h2 class="text-3xl font-bold {{ str_contains($voucher->voucher_type, 'Return') ? 'text-orange-600' : 'text-blue-600' }} uppercase tracking-widest">{{ $voucher->voucher_type }}</h2>
-                <p class="text-slate-500 font-mono mt-1">#VCH-{{ $voucher->id }}</p>
-                <p class="text-sm text-slate-600 mt-1 font-bold">Date: {{ \Carbon\Carbon::parse($voucher->voucher_date)->format('d M Y') }}</p>
+                <h2 class="text-3xl font-black {{ str_contains($voucher->voucher_type, 'Return') ? 'text-orange-600' : 'text-blue-600' }} uppercase tracking-widest">{{ $voucher->voucher_type }}</h2>
+                <p class="text-slate-500 font-mono mt-1 text-lg">#VCH-{{ $voucher->id }}</p>
+                <p class="text-sm text-slate-800 mt-2 font-bold bg-slate-100 inline-block px-3 py-1 rounded">Date: {{ \Carbon\Carbon::parse($voucher->voucher_date)->format('d M Y') }}</p>
             </div>
         </div>
 
-        {{-- BILL TO & INFO --}}
-        <div class="flex justify-between items-start mb-8">
-            <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Bill To:</p>
-                <h3 class="text-xl font-bold text-slate-800">{{ $party ? $party->name : 'Walk-in / General' }}</h3>
-                @if($party) <p class="text-sm text-slate-500">{{ $party->group_type }}</p> @endif
+        {{-- BILL TO & INFO (REDESIGNED CARD) --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-8">
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 w-full sm:w-1/2 shadow-sm">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Bill To:</p>
+                <h3 class="text-2xl font-extrabold text-slate-900">{{ $party ? $party->name : 'Walk-in / General' }}</h3>
+                
+                @if($party) 
+                    <p class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-100 inline-block px-2 py-1 rounded mt-2 mb-3">{{ $party->group_type }}</p> 
+                    
+                    <div class="space-y-2 mt-2">
+                        @if($party->mobile_number)
+                        <div class="flex items-start gap-2 text-slate-600">
+                            <svg class="w-4 h-4 text-slate-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            <span class="text-sm font-medium">{{ $party->mobile_number }}</span>
+                        </div>
+                        @endif
+                        
+                        @if($party->address)
+                        <div class="flex items-start gap-2 text-slate-600">
+                            <svg class="w-4 h-4 text-slate-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="text-sm font-medium leading-tight">{{ $party->address }}</span>
+                        </div>
+                        @endif
+                    </div>
+                @endif
             </div>
-            <div class="text-right">
+            
+            <div class="text-right w-full sm:w-auto">
                 @if($voucher->reference_number)
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Reference:</p>
-                    <p class="text-sm font-semibold text-slate-800">{{ $voucher->reference_number }}</p>
+                    <p class="text-lg font-black text-slate-800 bg-slate-100 px-3 py-1 rounded inline-block">{{ $voucher->reference_number }}</p>
                 @endif
             </div>
         </div>
 
         {{-- ITEMS TABLE --}}
         @if($voucher->inventoryMovements->count() > 0)
-        <table class="w-full text-left border-collapse mb-8">
-            <thead>
-                <tr class="bg-slate-100 text-slate-800 border-y-2 border-slate-800">
-                    <th class="p-3 font-bold text-sm">Description</th>
-                    <th class="p-3 font-bold text-sm text-right">Quantity</th>
-                    <th class="p-3 font-bold text-sm text-right">Rate</th>
-                    <th class="p-3 font-bold text-sm text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($voucher->inventoryMovements as $item)
-                <tr>
-                    <td class="p-3 text-sm text-slate-700 font-semibold">{{ $item->item->name ?? 'Unknown Item' }}</td>
-                    <td class="p-3 text-sm text-slate-700 text-right">{{ number_format($item->quantity, 2) }} {{ $item->item->unit ?? 'KG' }}</td>
-                    <td class="p-3 text-sm text-slate-700 text-right font-mono">৳ {{ number_format($item->rate, 2) }}</td>
-                    <td class="p-3 text-sm text-slate-900 text-right font-mono font-bold">৳ {{ number_format($item->quantity * $item->rate, 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="rounded-xl overflow-hidden border border-slate-200 mb-8">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800 text-white">
+                        <th class="p-4 font-bold text-sm tracking-wider uppercase">Description</th>
+                        <th class="p-4 font-bold text-sm tracking-wider uppercase text-right">Quantity</th>
+                        <th class="p-4 font-bold text-sm tracking-wider uppercase text-right">Rate</th>
+                        <th class="p-4 font-bold text-sm tracking-wider uppercase text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach($voucher->inventoryMovements as $item)
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 text-sm text-slate-800 font-bold">{{ $item->item->name ?? 'Unknown Item' }}</td>
+                        <td class="p-4 text-sm text-slate-700 text-right font-mono">{{ number_format($item->quantity, 2) }} <span class="text-xs text-slate-400">{{ $item->item->unit ?? 'KG' }}</span></td>
+                        <td class="p-4 text-sm text-slate-700 text-right font-mono">৳ {{ number_format($item->rate, 2) }}</td>
+                        <td class="p-4 text-sm text-slate-900 text-right font-mono font-black">৳ {{ number_format($item->quantity * $item->rate, 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
         @else
-        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-8 text-center text-slate-500 text-sm italic">
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8 text-center text-slate-500 font-medium">
             No inventory items associated with this transaction.
         </div>
         @endif
 
-        {{-- 🚨 REDESIGNED TOTALS & BALANCES --}}
+        {{-- TOTALS & BALANCES --}}
         <div class="flex flex-col sm:flex-row justify-between items-start gap-8">
             <div class="flex-1 w-full">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Narration / Notes:</p>
-                <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100">{{ $voucher->notes ?? 'No additional notes provided.' }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Narration / Notes:</p>
+                <p class="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 font-medium italic">{{ $voucher->notes ?? 'No additional notes provided.' }}</p>
             </div>
             
-            <div class="w-full sm:w-2/5 xl:w-1/3">
-                <table class="w-full text-right">
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 text-slate-500 font-bold text-sm">Invoice Amount:</td>
-                        <td class="py-2 font-mono text-slate-800 font-bold">৳ {{ number_format($totalAmount, 2) }}</td>
+            <div class="w-full sm:w-1/2 xl:w-2/5">
+                <table class="w-full text-right border-collapse">
+                    <tr class="border-b border-gray-100">
+                        <td class="py-3 text-slate-500 font-bold text-sm uppercase tracking-wider">Invoice Amount:</td>
+                        <td class="py-3 font-mono text-slate-900 font-black text-lg">৳ {{ number_format($totalAmount, 2) }}</td>
                     </tr>
                     
                     @if($party)
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 text-slate-500 font-bold text-sm">Previous Balance:</td>
-                        <td class="py-2 font-mono text-slate-800">
-                            {{ number_format(abs($previousBalanceRaw), 2) }} <span class="text-[10px] text-slate-500">{{ $previousBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-3 text-slate-500 font-bold text-sm uppercase tracking-wider">Previous Balance:</td>
+                        <td class="py-3 font-mono text-slate-700 font-bold text-lg">
+                            {{ number_format(abs($previousBalanceRaw), 2) }} <span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{{ $previousBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
                         </td>
                     </tr>
-                    <tr class="bg-slate-800 text-white border border-slate-800">
-                        <td class="py-3 px-4 font-bold text-base rounded-l-lg">NET BALANCE:</td>
-                        <td class="py-3 px-4 font-mono font-bold text-base rounded-r-lg">
-                            {{ number_format(abs($currentBalanceRaw), 2) }} <span class="text-xs text-slate-300">{{ $currentBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
+                    <tr class="bg-slate-900 text-white rounded-xl shadow-md overflow-hidden">
+                        <td class="py-4 px-5 font-black text-lg rounded-l-xl tracking-wider">NET BALANCE:</td>
+                        <td class="py-4 px-5 font-mono font-black text-xl rounded-r-xl">
+                            {{ number_format(abs($currentBalanceRaw), 2) }} <span class="text-xs text-slate-300 ml-1">{{ $currentBalanceRaw >= 0 ? 'Dr' : 'Cr' }}</span>
                         </td>
                     </tr>
                     @else
-                    <tr class="bg-slate-800 text-white border border-slate-800">
-                        <td class="py-3 px-4 font-bold text-lg rounded-l-lg">TOTAL:</td>
-                        <td class="py-3 px-4 font-mono font-bold text-lg rounded-r-lg">৳ {{ number_format($totalAmount, 2) }}</td>
+                    <tr class="bg-slate-900 text-white rounded-xl shadow-md overflow-hidden">
+                        <td class="py-4 px-5 font-black text-lg rounded-l-xl tracking-wider">TOTAL:</td>
+                        <td class="py-4 px-5 font-mono font-black text-xl rounded-r-xl">৳ {{ number_format($totalAmount, 2) }}</td>
                     </tr>
                     @endif
                 </table>
@@ -140,11 +165,11 @@
         {{-- SIGNATURES --}}
         <div class="flex justify-between items-end mt-24 pt-8 border-t border-gray-200">
             <div class="text-center w-48 border-t border-slate-400 pt-2">
-                <p class="text-xs font-bold text-slate-800">Customer / Supplier</p>
+                <p class="text-xs font-bold text-slate-800 uppercase tracking-widest">Customer / Supplier</p>
             </div>
             <div class="text-center w-48 border-t border-slate-400 pt-2">
-                <p class="text-xs font-bold text-slate-800">Authorized Signature</p>
-                <p class="text-[10px] text-slate-500">{{ $setting->company_name }}</p>
+                <p class="text-xs font-bold text-slate-800 uppercase tracking-widest">Authorized Signature</p>
+                <p class="text-[10px] font-bold text-slate-400 mt-1">{{ $setting->company_name }}</p>
             </div>
         </div>
     </div>
