@@ -49,19 +49,20 @@
                 <div class="p-5 bg-orange-50 border border-orange-200 rounded-xl">
                     <h4 class="font-bold text-orange-800 mb-4 text-sm uppercase tracking-wider border-b border-orange-200 pb-2">Update Inventory Valuations</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {{-- 🚨 FIXED: Changed step="0.01" to step="any" to allow high-precision decimals --}}
                         <div>
                             <label class="block font-bold text-gray-700 mb-1 text-xs uppercase">Opening Qty</label>
-                            <input type="number" step="0.01" name="opening_stock" id="opening-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
+                            <input type="number" step="any" name="opening_stock" id="opening-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
                             <p class="text-xs text-orange-600 mt-1">For P&L starting balance</p>
                         </div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1 text-xs uppercase">Current Qty</label>
-                            <input type="number" step="0.01" name="current_stock" id="current-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
+                            <input type="number" step="any" name="current_stock" id="current-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
                             <p class="text-xs text-orange-600 mt-1">Live warehouse stock</p>
                         </div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1 text-xs uppercase">Cost Rate (৳)</label>
-                            <input type="number" step="0.01" name="purchase_rate" id="rate-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
+                            <input type="number" step="any" name="purchase_rate" id="rate-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
                             <p class="text-xs text-orange-600 mt-1">Used to calculate value</p>
                         </div>
                     </div>
@@ -105,13 +106,11 @@
             function calculateDisplay() {
                 let rate = conversionRates[unitSelect.value] || 1;
                 
-                // QTY is divided by the conversion rate (e.g. 15000 KG / 1000 = 15 Ton)
-                openingInput.value = (dbOpening / rate).toFixed(2);
-                currentInput.value = (dbCurrent / rate).toFixed(2);
-                
-                // 🚨 FIXED: Rate is mathematically converted securely so it NEVER double-multiplies
-                // (e.g. 61.33 Tk/KG * 1000 = 61330 Tk/Ton)
-                rateInput.value = (trueBaseRatePerKg * rate).toFixed(2);
+                // 🚨 FIXED: Utilizing high-precision math (up to 6 decimal places).
+                // parseFloat removes trailing zeros, so 15.00000 neatly becomes 15, but 0.0152 stays 0.0152!
+                openingInput.value = parseFloat((dbOpening / rate).toFixed(6));
+                currentInput.value = parseFloat((dbCurrent / rate).toFixed(6));
+                rateInput.value = parseFloat((trueBaseRatePerKg * rate).toFixed(6));
             }
 
             // Calculate immediately when the page loads
@@ -120,16 +119,13 @@
             // Calculate instantly whenever you change the dropdown
             unitSelect.addEventListener('change', calculateDisplay);
 
-            // 🚨 CRITICAL FIX: Convert Qty back to Base KG before saving to Database!
+            // Convert Qty back to Base KG before saving to Database!
             form.addEventListener('submit', function(e) {
                 let rate = conversionRates[unitSelect.value] || 1;
                 
-                // If you type 15 (Ton), multiply by 1000 so the DB securely stores 15000 (KG)
-                // This prevents your inventory from magically shrinking to 15 KG upon save!
-                openingInput.value = (parseFloat(openingInput.value) * rate).toFixed(4);
-                currentInput.value = (parseFloat(currentInput.value) * rate).toFixed(4);
-                
-                // (We leave the rate exactly as typed so it safely stays 61330 in the DB)
+                // Use high precision on save to prevent any data loss
+                openingInput.value = parseFloat((parseFloat(openingInput.value) * rate).toFixed(6));
+                currentInput.value = parseFloat((parseFloat(currentInput.value) * rate).toFixed(6));
             });
         });
     </script>
