@@ -27,9 +27,6 @@
                 $actualQty = $item->current_stock / $conversionRate;
                 return $actualQty * $item->purchase_rate;
             });
-
-            // Extract unique groups for the datalist
-            $uniqueGroups = $items->pluck('item_group')->filter()->unique();
         @endphp
 
         <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
@@ -67,15 +64,21 @@
                             <option value="Byproduct">Byproduct</option>
                         </select>
                     </div>
+
+                    {{-- 🚨 FULLY REPLACED WITH THE STRICT BRAND DROPDOWN --}}
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Item Group</label>
-                        <input type="text" name="item_group" list="group-suggestions" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="e.g. Packaging, Rice...">
-                        <datalist id="group-suggestions">
-                            @foreach($uniqueGroups as $group)
-                                <option value="{{ $group }}">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Item Brand</label>
+                            <a href="/brands" class="text-[10px] text-blue-600 font-bold hover:underline bg-blue-50 px-2 py-0.5 rounded border border-blue-100">+ Manage Brands</a>
+                        </div>
+                        <select name="item_group" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none cursor-pointer appearance-none">
+                            <option value="" selected>-- Uncategorized --</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->name }}">{{ $brand->name }}</option>
                             @endforeach
-                        </datalist>
+                        </select>
                     </div>
+
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Base Unit</label>
                         <select name="unit" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none cursor-pointer">
@@ -90,11 +93,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-gray-100 pt-5">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Opening Stock (QTY)</label>
-                        <input type="number" step="0.01" name="opening_stock" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
+                        <input type="number" step="any" name="opening_stock" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Purchase Cost / Rate Per Unit (৳)</label>
-                        <input type="number" step="0.01" name="purchase_rate" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
+                        <input type="number" step="any" name="purchase_rate" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
                     </div>
                 </div>
 

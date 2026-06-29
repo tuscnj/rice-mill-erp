@@ -31,15 +31,18 @@
                         </select>
                     </div>
                     
-                    @php $uniqueGroups = \App\Models\Item::pluck('item_group')->filter()->unique(); @endphp
+                    {{-- 🚨 FULLY REPLACED WITH THE STRICT BRAND DROPDOWN --}}
                     <div>
-                        <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Item Group</label>
-                        <input type="text" name="item_group" value="{{ $item->item_group }}" list="group-suggestions" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none" placeholder="e.g. Rice Brands">
-                        <datalist id="group-suggestions">
-                            @foreach($uniqueGroups as $group)
-                                <option value="{{ $group }}">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block font-bold text-gray-700 text-sm uppercase">Item Brand</label>
+                            <a href="/brands" class="text-[10px] text-blue-600 font-bold hover:underline bg-blue-50 px-2 py-0.5 rounded border border-blue-100">+ Manage Brands</a>
+                        </div>
+                        <select name="item_group" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none bg-white cursor-pointer">
+                            <option value="">-- Uncategorized --</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->name }}" {{ $item->item_group == $brand->name ? 'selected' : '' }}>{{ $brand->name }}</option>
                             @endforeach
-                        </datalist>
+                        </select>
                     </div>
                     <div>
                         <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Base Unit</label>
