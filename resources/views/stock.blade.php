@@ -17,11 +17,25 @@
             </div>
         </div>
 
+        @php
+            // 🚨 FIXED: Now accurately calculates Total Valuation based on correct unit conversion!
+            $totalWarehouseValue = $items->sum(function($item) use ($units) {
+                $itemUnitStr = $item->unit ?? 'KG';
+                $unitObj = $units->first(function($u) use ($itemUnitStr) {
+                    return ($u->short_name ?? $u->name) == $itemUnitStr;
+                });
+                $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
+                
+                $actualQty = $item->current_stock / $conversionRate;
+                return $actualQty * $item->purchase_rate;
+            });
+        @endphp
+
         <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
             <div>
                 <p class="text-xs sm:text-sm uppercase tracking-widest text-slate-400 font-bold mb-1">Total Estimated Inventory Value</p>
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-emerald-400">
-                    ৳ {{ number_format($items->sum(function($item) { return $item->current_stock * $item->purchase_rate; }), 2) }}
+                    ৳ {{ number_format($totalWarehouseValue, 2) }}
                 </h2>
             </div>
             <div class="bg-slate-800/50 px-6 py-4 rounded-xl border border-slate-700 w-full sm:w-auto flex justify-between sm:block items-center">
@@ -97,7 +111,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
                     @foreach($items as $item)
-                        {{-- SMART DISPLAY CONVERSION LOGIC --}}
+                        {{-- 🚨 FIXED SMART DISPLAY MATH LOGIC --}}
                         @php
                             $itemUnitStr = $item->unit ?? 'KG';
                             $unitObj = $units->first(function($u) use ($itemUnitStr) {
@@ -106,7 +120,9 @@
                             $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
                             
                             $displayQty = $item->current_stock / $conversionRate;
-                            $displayRate = $item->purchase_rate * $conversionRate;
+                            // Removed the faulty multiplier!
+                            $displayRate = $item->purchase_rate; 
+                            $valuation = $displayQty * $displayRate;
                         @endphp
 
                         <tr class="hover:bg-gray-50 transition">
@@ -133,7 +149,7 @@
                                 ৳{{ number_format($displayRate, 2) }} <span class="text-[10px] text-gray-400">/ {{ $itemUnitStr }}</span>
                             </td>
                             <td class="p-4 text-right font-mono font-bold text-slate-800 text-base">
-                                ৳{{ number_format($item->current_stock * $item->purchase_rate, 2) }}
+                                ৳{{ number_format($valuation, 2) }}
                             </td>
                             <td class="p-4 text-center">
                                 <div class="flex justify-center items-center gap-2">
@@ -146,6 +162,7 @@
                 </tbody>
             </table>
 
+            {{-- MOBILE VIEW --}}
             <div class="grid grid-cols-1 gap-4 md:hidden">
                 @foreach($items as $item)
                     @php
@@ -154,8 +171,10 @@
                             return ($u->short_name ?? $u->name) == $itemUnitStr;
                         });
                         $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
+                        
                         $displayQty = $item->current_stock / $conversionRate;
-                        $displayRate = $item->purchase_rate * $conversionRate;
+                        $displayRate = $item->purchase_rate;
+                        $valuation = $displayQty * $displayRate;
                     @endphp
                     
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative">
@@ -173,7 +192,7 @@
                             </div>
                             <div class="flex flex-col items-end">
                                 <span class="text-xs text-gray-400 font-bold uppercase mb-1">Total Value</span>
-                                <span class="font-mono font-extrabold text-slate-800 text-lg">৳{{ number_format($item->current_stock * $item->purchase_rate, 2) }}</span>
+                                <span class="font-mono font-extrabold text-slate-800 text-lg">৳{{ number_format($valuation, 2) }}</span>
                             </div>
                         </div>
 
