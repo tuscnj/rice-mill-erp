@@ -15,11 +15,11 @@
     {{-- ACTION BAR (Hidden when printing) --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 print:hidden">
         <div>
-            <a href="/invoices" class="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 bg-blue-50 px-4 py-2 rounded-lg transition">
+            <a href="/invoices" class="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition">
                 &larr; Back to Invoices
             </a>
         </div>
-        <div class="flex gap-2 w-full sm:w-auto">
+        <div class="flex gap-3 w-full sm:w-auto">
             <button onclick="window.print()" class="flex-1 sm:flex-none justify-center sm:justify-start bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition flex items-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 Print
@@ -31,8 +31,8 @@
         </div>
     </div>
 
-    {{-- INVOICE PAPER (Shadow removed, clean flat border applied) --}}
-    <div class="bg-white p-8 sm:p-12 border border-gray-200 print:border-none print:p-0 mt-6 relative overflow-hidden">
+    {{-- INVOICE PAPER (Fixed A4 Size for easy viewing and printing) --}}
+    <div class="bg-white p-8 sm:p-12 border border-gray-200 shadow-sm print:shadow-none print:border-none print:p-0 mt-6 relative overflow-hidden mx-auto w-full" style="max-width: 210mm; min-height: 297mm;">
         
         {{-- Decorative Top Accent --}}
         <div class="absolute top-0 left-0 w-full h-2 {{ str_contains($voucher->voucher_type, 'Return') ? 'bg-orange-500' : 'bg-blue-600' }}"></div>
@@ -62,11 +62,9 @@
             {{-- BILLED TO --}}
             <div class="w-full md:w-1/2">
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Billed To:</p>
-                <h3 class="text-2xl font-extrabold text-slate-900">{{ $party ? $party->name : 'Walk-in / General' }}</h3>
+                <h3 class="text-2xl font-extrabold text-slate-900 mb-3">{{ $party ? $party->name : 'Walk-in / General' }}</h3>
                 
-                @if($party) 
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 inline-block px-2 py-0.5 rounded mt-1 mb-2">{{ $party->group_type }}</p> 
-                    
+                @if($party)                     
                     <div class="space-y-1">
                         @if($party->mobile_number)
                         <div class="flex items-center gap-2 text-slate-600">

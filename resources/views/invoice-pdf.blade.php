@@ -11,8 +11,7 @@
         .logo { max-height: 60px; max-width: 150px; margin-right: 15px; }
         .company-name { font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase; margin: 0; }
         .company-info { font-size: 11px; color: #64748b; margin: 4px 0 0 0; }
-        .party-name { margin: 0; font-size: 20px; color: #0f172a; font-weight: 900; }
-        .party-type { font-size: 9px; font-weight: bold; color: #2563eb; background: #dbeafe; padding: 3px 6px; border-radius: 4px; display: inline-block; margin: 6px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;}
+        .party-name { margin: 0; font-size: 20px; color: #0f172a; font-weight: 900; margin-bottom: 8px;}
         .contact-info { margin: 2px 0 0 0; font-size: 11px; color: #475569; }
 
         .middle-row { width: 100%; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; margin-bottom: 25px; display: table; table-layout: fixed; }
@@ -61,6 +60,7 @@
 
     <table style="width: 100%; margin-top: 30px; margin-bottom: 25px; table-layout: fixed;">
         <tr>
+            <!-- BILLED FROM -->
             <td style="width: 50%; vertical-align: top; padding-right: 20px;">
                 <div class="info-header">Billed From:</div>
                 <table style="margin: 0; padding: 0; border: none; width: 100%;">
@@ -80,11 +80,11 @@
                 </table>
             </td>
 
+            <!-- BILLED TO -->
             <td style="width: 50%; vertical-align: top; padding-left: 20px;">
                 <div class="info-header">Billed To:</div>
                 <h2 class="party-name">{{ $party ? $party->name : 'Walk-in / General' }}</h2>
                 @if($party)
-                    <div class="party-type">{{ $party->group_type }}</div>
                     @if($party->mobile_number)<p class="contact-info"><strong>Phone:</strong> {{ $party->mobile_number }}</p>@endif
                     @if($party->address)<p class="contact-info"><strong>Address:</strong> {{ $party->address }}</p>@endif
                 @endif
@@ -92,6 +92,7 @@
         </tr>
     </table>
 
+    <!-- INVOICE META (Middle Row) -->
     <table class="middle-row">
         <tr>
             <td>
