@@ -176,6 +176,17 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index']);
         Route::post('/update-settings', [App\Http\Controllers\SettingsController::class, 'update']);
+
+        // 🚨 MAGIC MIGRATE ROUTE FOR cPANEL
+Route::get('/run-migrations', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return '<h1>✅ Database Updated Successfully!</h1><p>The item_group column has been created. You can now close this tab and go back to your ERP.</p>';
+    } catch (\Exception $e) {
+        return '<h1>❌ Error:</h1><p>' . $e->getMessage() . '</p>';
+    }
+});
+
     });
 });
 
