@@ -186,7 +186,7 @@
 </div>
 
 <style>
-    @media print {
+    /* @media print {
         @page { size: A4 portrait; margin: 10mm; }
         body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .print\:hidden { display: none !important; }
@@ -196,7 +196,7 @@
         .print\:p-0 { padding: 0 !important; }
         .print\:shadow-none { box-shadow: none !important; }
         .print\:border-none { border: none !important; }
-    }
+    } */
 </style>
 <script>
 function printDiv() { 
