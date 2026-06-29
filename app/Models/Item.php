@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Item extends Model
 {
-    // Added 'opening_stock' and 'purchase_rate' to allow the initial setup values to be saved
+    // Added 'item_group' to allow the new categorization
     protected $fillable = [
         'name', 
         'category', 
+        'item_group', 
         'unit', 
         'opening_stock', 
         'purchase_rate', 

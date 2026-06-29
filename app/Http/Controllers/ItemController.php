@@ -22,11 +22,13 @@ class ItemController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string',
+            'item_group' => 'nullable|string', // <-- Validates the new field
         ]);
 
         Item::create([
             'name' => $request->name,
             'category' => $request->category,
+            'item_group' => $request->item_group, // <-- Saves the new field
             'opening_stock' => $request->opening_stock ?? 0,
             'current_stock' => $request->opening_stock ?? 0,
             'purchase_rate' => $request->opening_rate ?? $request->purchase_rate ?? 0,
@@ -50,7 +52,6 @@ class ItemController extends Controller
         $item = Item::findOrFail($id);
         $item->update($request->all());
         
-        // 🚨 CHANGED: Redirects to stock instead of items
         return redirect('/stock');
     }
 

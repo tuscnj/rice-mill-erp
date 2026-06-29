@@ -1,15 +1,11 @@
 @extends('layouts.app')
-
 @section('title', 'Edit Item')
-
 @section('content')
     <div class="max-w-3xl mx-auto">
         
         <div class="mb-6 flex items-center gap-4">
             <a href="/stock" class="text-gray-500 hover:text-gray-800 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             </a>
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Edit Stock Item</h1>
@@ -21,7 +17,7 @@
             @csrf
             
             <div class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Item Name</label>
                         <input type="text" name="name" value="{{ $item->name }}" required class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none">
@@ -33,6 +29,17 @@
                             <option value="Finished Goods" {{ $item->category == 'Finished Goods' ? 'selected' : '' }}>Finished Goods</option>
                             <option value="Byproduct" {{ $item->category == 'Byproduct' ? 'selected' : '' }}>Byproduct</option>
                         </select>
+                    </div>
+                    
+                    @php $uniqueGroups = \App\Models\Item::pluck('item_group')->filter()->unique(); @endphp
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Item Group</label>
+                        <input type="text" name="item_group" value="{{ $item->item_group }}" list="group-suggestions" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none" placeholder="e.g. Rice Brands">
+                        <datalist id="group-suggestions">
+                            @foreach($uniqueGroups as $group)
+                                <option value="{{ $group }}">
+                            @endforeach
+                        </datalist>
                     </div>
                     <div>
                         <label class="block font-bold text-gray-700 mb-1 text-sm uppercase">Base Unit</label>
@@ -46,10 +53,9 @@
                     </div>
                 </div>
 
-                <div class="p-5 bg-orange-50 border border-orange-200 rounded-xl">
+                <div class="p-5 bg-orange-50 border border-orange-200 rounded-xl mt-4">
                     <h4 class="font-bold text-orange-800 mb-4 text-sm uppercase tracking-wider border-b border-orange-200 pb-2">Update Inventory Valuations</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {{-- 🚨 FIXED: Changed step="0.01" to step="any" to allow high-precision decimals --}}
                         <div>
                             <label class="block font-bold text-gray-700 mb-1 text-xs uppercase">Opening Qty</label>
                             <input type="number" step="any" name="opening_stock" id="opening-input" required class="w-full p-3 border-2 border-white shadow-sm rounded-lg focus:border-orange-500 outline-none font-mono">
@@ -70,9 +76,7 @@
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <a href="/stock" class="px-6 py-3 rounded-lg font-bold text-gray-500 hover:bg-gray-100 transition">Cancel</a>
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition">
-                        Save Changes
-                    </button>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition">Save Changes</button>
                 </div>
             </div>
         </form>
@@ -86,44 +90,32 @@
             const rateInput = document.getElementById('rate-input');
             const form = document.getElementById('edit-form');
 
-            // Securely grab the absolute values from the database
             const dbOpening = {{ $item->opening_stock ?? 0 }};
             const dbCurrent = {{ $item->current_stock ?? 0 }};
             const dbRate = {{ $item->purchase_rate ?? 0 }};
 
-            // Build a JS dictionary of all your database conversion rates
             const conversionRates = {
                 @foreach($units as $u)
                     "{{ $u->short_name ?? $u->name }}": {{ $u->conversion_rate ?? 1 }},
                 @endforeach
             };
 
-            // Determine the true base rate (per KG) behind the scenes
             const originalUnit = "{{ $item->unit ?? 'KG' }}";
             const originalConversionRate = conversionRates[originalUnit] || 1;
             const trueBaseRatePerKg = dbRate / originalConversionRate;
 
             function calculateDisplay() {
                 let rate = conversionRates[unitSelect.value] || 1;
-                
-                // 🚨 FIXED: Utilizing high-precision math (up to 6 decimal places).
-                // parseFloat removes trailing zeros, so 15.00000 neatly becomes 15, but 0.0152 stays 0.0152!
                 openingInput.value = parseFloat((dbOpening / rate).toFixed(6));
                 currentInput.value = parseFloat((dbCurrent / rate).toFixed(6));
                 rateInput.value = parseFloat((trueBaseRatePerKg * rate).toFixed(6));
             }
 
-            // Calculate immediately when the page loads
             calculateDisplay();
-
-            // Calculate instantly whenever you change the dropdown
             unitSelect.addEventListener('change', calculateDisplay);
 
-            // Convert Qty back to Base KG before saving to Database!
             form.addEventListener('submit', function(e) {
                 let rate = conversionRates[unitSelect.value] || 1;
-                
-                // Use high precision on save to prevent any data loss
                 openingInput.value = parseFloat((parseFloat(openingInput.value) * rate).toFixed(6));
                 currentInput.value = parseFloat((parseFloat(currentInput.value) * rate).toFixed(6));
             });

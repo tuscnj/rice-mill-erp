@@ -18,17 +18,18 @@
         </div>
 
         @php
-            // 🚨 FIXED: Now accurately calculates Total Valuation based on correct unit conversion!
             $totalWarehouseValue = $items->sum(function($item) use ($units) {
                 $itemUnitStr = $item->unit ?? 'KG';
                 $unitObj = $units->first(function($u) use ($itemUnitStr) {
                     return ($u->short_name ?? $u->name) == $itemUnitStr;
                 });
                 $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
-                
                 $actualQty = $item->current_stock / $conversionRate;
                 return $actualQty * $item->purchase_rate;
             });
+
+            // Extract unique groups for the datalist
+            $uniqueGroups = $items->pluck('item_group')->filter()->unique();
         @endphp
 
         <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
@@ -44,8 +45,8 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="bg-gray-50/80 border-b border-gray-100 px-6 py-5 flex items-center gap-2">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible">
+            <div class="bg-gray-50/80 border-b border-gray-100 px-6 py-5 flex items-center gap-2 rounded-t-2xl">
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 <h3 class="font-bold text-gray-800 tracking-wide text-sm sm:text-base">Add New Stock Item / Product Variant</h3>
             </div>
@@ -53,22 +54,31 @@
             <form method="POST" action="/items" class="p-6 sm:p-8 space-y-6">
                 @csrf
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Item Name</label>
-                        <input type="text" name="name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200" placeholder="e.g. Miniket Rice (50KG)">
+                        <input type="text" name="name" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="e.g. Miniket (50KG)">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Category</label>
-                        <select name="category" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
+                        <select name="category" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none cursor-pointer">
                             <option value="Raw Material">Raw Material</option>
                             <option value="Finished Goods">Finished Goods</option>
                             <option value="Byproduct">Byproduct</option>
                         </select>
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Item Group</label>
+                        <input type="text" name="item_group" list="group-suggestions" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="e.g. Packaging, Rice...">
+                        <datalist id="group-suggestions">
+                            @foreach($uniqueGroups as $group)
+                                <option value="{{ $group }}">
+                            @endforeach
+                        </datalist>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Base Unit</label>
-                        <select name="unit" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 cursor-pointer appearance-none">
+                        <select name="unit" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none cursor-pointer">
                             <option value="" disabled selected>Select Unit...</option>
                             @foreach($units as $unit)
                                 <option value="{{ $unit->short_name ?? $unit->name }}">{{ $unit->name }} ({{ $unit->short_name ?? '' }})</option>
@@ -77,18 +87,18 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-gray-100 pt-5">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Opening Stock (QTY)</label>
-                        <input type="number" step="0.01" name="opening_stock" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200" placeholder="Leave blank if 0">
+                        <input type="number" step="0.01" name="opening_stock" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Purchase Cost / Rate Per Unit (৳)</label>
-                        <input type="number" step="0.01" name="purchase_rate" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200" placeholder="Leave blank if 0">
+                        <input type="number" step="0.01" name="purchase_rate" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Leave blank if 0">
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-gray-100">
+                <div class="flex justify-end pt-4">
                     <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                         Save Stock Item
@@ -101,8 +111,7 @@
             <table class="w-full text-left border-collapse hidden md:table">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
-                        <th class="p-4 font-bold">Item Name</th>
-                        <th class="p-4 font-bold">Category</th>
+                        <th class="p-4 font-bold">Item Details</th>
                         <th class="p-4 font-bold text-right">Current Qty</th>
                         <th class="p-4 font-bold text-right">Cost Rate</th>
                         <th class="p-4 font-bold text-right">Valuation (৳)</th>
@@ -111,36 +120,28 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
                     @foreach($items as $item)
-                        {{-- 🚨 FIXED SMART DISPLAY MATH LOGIC --}}
                         @php
                             $itemUnitStr = $item->unit ?? 'KG';
-                            $unitObj = $units->first(function($u) use ($itemUnitStr) {
-                                return ($u->short_name ?? $u->name) == $itemUnitStr;
-                            });
+                            $unitObj = $units->first(function($u) use ($itemUnitStr) { return ($u->short_name ?? $u->name) == $itemUnitStr; });
                             $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
-                            
                             $displayQty = $item->current_stock / $conversionRate;
-                            // Removed the faulty multiplier!
                             $displayRate = $item->purchase_rate; 
                             $valuation = $displayQty * $displayRate;
                         @endphp
-
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-800">
-                                <a href="/item-ledger/{{ $item->id }}" class="hover:text-blue-600 transition flex items-center gap-2">
-                                    {{ $item->name }}
-                                </a>
-                            </td>
                             <td class="p-4">
-                                <span class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1
-                                    {{ $item->category == 'Raw Material' ? 'bg-red-50 text-red-700 border border-red-100' : '' }}
-                                    {{ $item->category == 'Finished Goods' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : '' }}
-                                    {{ $item->category == 'Byproduct' ? 'bg-amber-50 text-amber-700 border border-amber-100' : '' }}">
-                                    @if($item->category == 'Raw Material') <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> @endif
-                                    @if($item->category == 'Finished Goods') <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> @endif
-                                    @if($item->category == 'Byproduct') <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> @endif
-                                    {{ $item->category }}
-                                </span>
+                                <a href="/item-ledger/{{ $item->id }}" class="font-bold text-gray-800 hover:text-blue-600 transition block text-base">{{ $item->name }}</a>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                        {{ $item->category == 'Raw Material' ? 'bg-red-50 text-red-700' : '' }}
+                                        {{ $item->category == 'Finished Goods' ? 'bg-emerald-50 text-emerald-700' : '' }}
+                                        {{ $item->category == 'Byproduct' ? 'bg-amber-50 text-amber-700' : '' }}">
+                                        {{ $item->category }}
+                                    </span>
+                                    @if($item->item_group)
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ $item->item_group }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="p-4 text-right font-mono font-medium text-gray-900 text-base">
                                 {{ number_format($displayQty, 2) }} <span class="text-xs text-gray-400 ml-1">{{ $itemUnitStr }}</span>
@@ -167,11 +168,8 @@
                 @foreach($items as $item)
                     @php
                         $itemUnitStr = $item->unit ?? 'KG';
-                        $unitObj = $units->first(function($u) use ($itemUnitStr) {
-                            return ($u->short_name ?? $u->name) == $itemUnitStr;
-                        });
+                        $unitObj = $units->first(function($u) use ($itemUnitStr) { return ($u->short_name ?? $u->name) == $itemUnitStr; });
                         $conversionRate = ($unitObj && $unitObj->conversion_rate > 0) ? $unitObj->conversion_rate : 1;
-                        
                         $displayQty = $item->current_stock / $conversionRate;
                         $displayRate = $item->purchase_rate;
                         $valuation = $displayQty * $displayRate;
@@ -181,13 +179,16 @@
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <a href="/item-ledger/{{ $item->id }}" class="text-lg font-bold text-gray-800 hover:text-blue-600">{{ $item->name }}</a>
-                                <div class="mt-1">
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
                                         {{ $item->category == 'Raw Material' ? 'bg-red-50 text-red-700' : '' }}
                                         {{ $item->category == 'Finished Goods' ? 'bg-emerald-50 text-emerald-700' : '' }}
                                         {{ $item->category == 'Byproduct' ? 'bg-amber-50 text-amber-700' : '' }}">
                                         {{ $item->category }}
                                     </span>
+                                    @if($item->item_group)
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">{{ $item->item_group }}</span>
+                                    @endif
                                 </div>
                             </div>
                             <div class="flex flex-col items-end">
